@@ -1,18 +1,28 @@
 {
   "name": "mctp-frontend",
+  "description": "MCTP API Frontend Dashboard — real-time health monitoring built with Vue 3 + Vite",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
+  "author": "SelfAbandonment",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.mjs --fix",
+    "lint:check": "eslint . --ext .vue,.js,.jsx,.mjs"
   },
   "dependencies": {
     "vue": "^3.5.32"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.5",
+    "eslint": "^9.0.0",
+    "eslint-plugin-vue": "^9.0.0",
     "vite": "^8.0.4"
   }
 }
