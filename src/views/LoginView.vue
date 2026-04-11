@@ -18,11 +18,16 @@ async function handleLogin() {
     const redirect = router.currentRoute.value.query.redirect || '/dashboard'
     router.push(redirect)
   } catch (e) {
-    const detail = e.response?.data
-    if (detail?.detail) {
+    const body = e.response?.data
+    const status = e.response?.status
+    if (status === 401) {
       error.value = '用户名或密码错误'
+    } else if (e.code === 'ECONNABORTED') {
+      error.value = '请求超时，服务器可能正在启动，请稍后重试'
+    } else if (!e.response) {
+      error.value = '网络错误，请检查网络连接'
     } else {
-      error.value = '登录失败，请稍后重试'
+      error.value = body?.message || '登录失败，请稍后重试'
     }
   } finally {
     loading.value = false

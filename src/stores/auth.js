@@ -31,8 +31,11 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function register(username, email, password, passwordConfirm) {
-    await authApi.register({ username, email, password, password_confirm: passwordConfirm })
-    await login(username, password)
+    const res = await authApi.register({ username, email, password, password_confirm: passwordConfirm })
+    // register 成功(201)后自动 login，login 失败单独抛出不影响注册结果
+    if (res.status === 201) {
+      await login(username, password)
+    }
   }
 
   async function refresh() {

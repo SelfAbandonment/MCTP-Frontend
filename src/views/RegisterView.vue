@@ -12,7 +12,7 @@ const errors = ref({})
 const globalError = ref('')
 
 function fieldError(key) {
-  return errors.value[key]?.[0] || errors.value?.password?.[0]
+  return errors.value[key]?.[0] || null
 }
 
 async function handleRegister() {
@@ -28,11 +28,20 @@ async function handleRegister() {
     )
     router.push('/dashboard')
   } catch (e) {
-    const data = e.response?.data
-    if (data?.data && typeof data.data === 'object') {
-      errors.value = data.data
+    const body = e.response?.data
+    const status = e.response?.status
+    if (status === 400 && body?.data && typeof body.data === 'object') {
+      // 后端校验错误，展示字段级别提示
+      errors.value = body.data
+    } else if (status === 400) {
+      globalError.value = body?.message || '注册失败，请检查填写内容'
+    } else if (e.code === 'ECONNABORTED') {
+      globalError.value = '请求超时，服务器可能正在启动，请稍后重试'
+    } else if (!e.response) {
+      globalError.value = '网络错误，请检查网络连接'
     } else {
-      globalError.value = '注册失败，请稍后重试'
+      // 注册成功但自动登录失败，引导去手动登录
+      globalError.value = '注册成功！请前往登录页登录'
     }
   } finally {
     loading.value = false
