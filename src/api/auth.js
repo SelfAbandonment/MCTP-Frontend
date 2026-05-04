@@ -6,4 +6,7 @@ export const authApi = {
   refresh: (data) => api.post('/api/v1/auth/token/refresh/', data),
   me: () => api.get('/api/v1/auth/me/'),
   updateMe: (data) => api.put('/api/v1/auth/me/', data),
+  // Microsoft / Minecraft OAuth
+  microsoftLogin: () => api.get('/api/v1/auth/microsoft/login/'),
+  microsoftUnbind: () => api.delete('/api/v1/auth/microsoft/unbind/'),
 }

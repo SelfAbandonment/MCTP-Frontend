@@ -21,6 +21,10 @@ const routes = [
     component: () => import('@/views/DashboardView.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/auth/microsoft/callback',
+    component: () => import('@/views/MicrosoftCallbackView.vue'),
+  },
 ]
 
 const router = createRouter({
