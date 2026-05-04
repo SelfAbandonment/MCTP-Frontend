@@ -16,6 +16,18 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('refresh', refresh)
   }
 
+  async function microsoftLogin() {
+    const res = await authApi.microsoftLogin()
+    const url = res.data?.data?.authorize_url
+    if (!url) throw new Error('未获取到授权链接')
+    window.location.href = url
+  }
+
+  async function consumeMicrosoftCallback({ access, refresh }) {
+    setTokens(access, refresh)
+    await fetchMe()
+  }
+
   function logout() {
     accessToken.value = null
     refreshToken.value = null
@@ -54,5 +66,5 @@ export const useAuthStore = defineStore('auth', () => {
     fetchMe().catch(() => logout())
   }
 
-  return { accessToken, refreshToken, user, isLoggedIn, login, register, logout, refresh, fetchMe }
+  return { accessToken, refreshToken, user, isLoggedIn, login, register, logout, refresh, fetchMe, microsoftLogin, consumeMicrosoftCallback }
 })

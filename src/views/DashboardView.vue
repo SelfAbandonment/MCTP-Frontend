@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { authApi } from '@/api/auth'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://mctp-api.onrender.com'
 const auth = useAuthStore()
@@ -9,6 +10,24 @@ const health = ref(null)
 const healthLoading = ref(true)
 const healthError = ref(null)
 const lastChecked = ref(null)
+const unbindLoading = ref(false)
+
+async function unbindMs() {
+  if (!confirm('确定解绑微软/Minecraft 账号？')) return
+  unbindLoading.value = true
+  try {
+    await authApi.microsoftUnbind()
+    await auth.fetchMe()
+  } catch (e) {
+    alert('解绑失败：' + (e.response?.data?.message || e.message))
+  } finally {
+    unbindLoading.value = false
+  }
+}
+
+async function bindMs() {
+  try { await auth.microsoftLogin() } catch (e) { alert('无法发起微软登录') }
+}
 
 async function checkHealth() {
   try {
@@ -48,6 +67,25 @@ onUnmounted(() => clearInterval(timer))
           <div class="info-row"><span class="info-label">注册时间</span>
             <span>{{ auth.user?.date_joined ? new Date(auth.user.date_joined).toLocaleDateString() : '-' }}</span>
           </div>
+        </div>
+      </div>
+
+      <!-- Minecraft 绑定 -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">Minecraft 账号</span></div>
+        <div class="card-body">
+          <template v-if="auth.user?.minecraft">
+            <div class="info-row"><span class="info-label">玩家名</span><span>{{ auth.user.minecraft.username }}</span></div>
+            <div class="info-row"><span class="info-label">UUID</span><span style="font-size:0.78rem">{{ auth.user.minecraft.uuid }}</span></div>
+            <div class="info-row" style="border:none">
+              <img :src="`https://crafatar.com/avatars/${auth.user.minecraft.uuid}?size=48&overlay`" alt="head" width="48" height="48" style="border-radius:4px" />
+              <button class="btn-link" :disabled="unbindLoading" @click="unbindMs">{{ unbindLoading ? '解绑中...' : '解绑' }}</button>
+            </div>
+          </template>
+          <template v-else>
+            <p class="text-muted" style="margin-bottom:1rem">尚未绑定微软/Minecraft 账号</p>
+            <button class="btn-primary" type="button" @click="bindMs">绑定 Microsoft</button>
+          </template>
         </div>
       </div>
 
@@ -98,4 +136,6 @@ onUnmounted(() => clearInterval(timer))
 @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
 .status-ok { color: #3fb950; font-weight: 600; }
 .status-error { color: #f85149; }
+.btn-link { background:none; border:none; color:#58a6ff; cursor:pointer; padding:0; font-size:0.85rem; }
+.btn-link:disabled { opacity:0.6; cursor:not-allowed; }
 </style>

@@ -8,7 +8,19 @@ const auth = useAuthStore()
 
 const form = ref({ username: '', password: '' })
 const loading = ref(false)
+const msLoading = ref(false)
 const error = ref('')
+
+async function handleMicrosoft() {
+  error.value = ''
+  msLoading.value = true
+  try {
+    await auth.microsoftLogin()
+  } catch (e) {
+    msLoading.value = false
+    error.value = e.response?.data?.message || '无法发起微软登录'
+  }
+}
 
 async function handleLogin() {
   error.value = ''
@@ -57,6 +69,18 @@ async function handleLogin() {
         </button>
       </form>
 
+      <div class="divider"><span>或</span></div>
+
+      <button class="btn-ms" type="button" :disabled="msLoading" @click="handleMicrosoft">
+        <svg width="18" height="18" viewBox="0 0 23 23" aria-hidden="true">
+          <rect x="1" y="1" width="10" height="10" fill="#f25022"/>
+          <rect x="12" y="1" width="10" height="10" fill="#7fba00"/>
+          <rect x="1" y="12" width="10" height="10" fill="#00a4ef"/>
+          <rect x="12" y="12" width="10" height="10" fill="#ffb900"/>
+        </svg>
+        <span>{{ msLoading ? '跳转中...' : '使用微软账号登录（Minecraft）' }}</span>
+      </button>
+
       <p class="text-center text-muted" style="margin-top:1.25rem">
         还没有账号？
         <RouterLink to="/register" class="link">立即注册</RouterLink>
@@ -69,4 +93,9 @@ async function handleLogin() {
 .auth-wrap { display: flex; justify-content: center; padding-top: 3rem; }
 .auth-card { width: 100%; max-width: 420px; }
 .auth-title { font-size: 1.4rem; font-weight: 700; text-align: center; margin-bottom: 0.5rem; }
+.divider { display:flex; align-items:center; gap:0.75rem; color:#8a93a6; margin: 1.25rem 0; font-size: 0.85rem; }
+.divider::before, .divider::after { content:""; flex:1; height:1px; background:#e5e7eb; }
+.btn-ms { width:100%; display:flex; align-items:center; justify-content:center; gap:0.6rem; padding:0.65rem 1rem; border:1px solid #d0d4dc; background:#fff; color:#1f2937; font-weight:600; border-radius:6px; cursor:pointer; transition: background 0.15s; }
+.btn-ms:hover:not(:disabled) { background:#f5f6f8; }
+.btn-ms:disabled { opacity:0.6; cursor:not-allowed; }
 </style>
