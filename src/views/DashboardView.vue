@@ -49,8 +49,9 @@ onUnmounted(() => clearInterval(timer))
 </script>
 
 <template>
-  <div>
+  <div class="dash-wrap">
     <section class="hero">
+      <p class="hero-eyebrow">Workspace Overview</p>
       <h1 class="hero-title">
         欢迎回来，<span class="gradient">{{ auth.user?.username || '...' }}</span>
       </h1>
@@ -59,7 +60,7 @@ onUnmounted(() => clearInterval(timer))
 
     <div class="cards">
       <!-- 用户信息 -->
-      <div class="card">
+      <div class="card dash-card">
         <div class="card-header"><span class="card-title">账户信息</span></div>
         <div class="card-body">
           <div class="info-row"><span class="info-label">用户名</span><span>{{ auth.user?.username }}</span></div>
@@ -71,14 +72,14 @@ onUnmounted(() => clearInterval(timer))
       </div>
 
       <!-- Minecraft 绑定 -->
-      <div class="card">
+      <div class="card dash-card">
         <div class="card-header"><span class="card-title">Minecraft 账号</span></div>
         <div class="card-body">
           <template v-if="auth.user?.minecraft">
-            <div class="info-row"><span class="info-label">玩家名</span><span>{{ auth.user.minecraft.username }}</span></div>
-            <div class="info-row"><span class="info-label">UUID</span><span style="font-size:0.78rem">{{ auth.user.minecraft.uuid }}</span></div>
-            <div class="info-row" style="border:none">
-              <img :src="`https://crafatar.com/avatars/${auth.user.minecraft.uuid}?size=48&overlay`" alt="head" width="48" height="48" style="border-radius:4px" />
+            <div class="info-row"><span class="info-label">玩家名</span><span class="chip">{{ auth.user.minecraft.username }}</span></div>
+            <div class="info-row"><span class="info-label">UUID</span><span class="uuid-text">{{ auth.user.minecraft.uuid }}</span></div>
+            <div class="info-row info-avatar" style="border:none">
+              <img :src="`https://crafatar.com/avatars/${auth.user.minecraft.uuid}?size=48&overlay`" alt="head" width="48" height="48" class="avatar-head" />
               <button class="btn-link" :disabled="unbindLoading" @click="unbindMs">{{ unbindLoading ? '解绑中...' : '解绑' }}</button>
             </div>
           </template>
@@ -90,7 +91,7 @@ onUnmounted(() => clearInterval(timer))
       </div>
 
       <!-- 服务状态 -->
-      <div class="card">
+      <div class="card dash-card">
         <div class="card-header">
           <span class="card-title">服务状态</span>
           <span class="refresh-time" v-if="lastChecked">{{ lastChecked }}</span>
@@ -116,26 +117,182 @@ onUnmounted(() => clearInterval(timer))
 </template>
 
 <style scoped>
-.hero { margin-bottom: 2rem; }
-.hero-title { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.4rem; }
-.gradient { background: linear-gradient(135deg, #58a6ff, #bc8cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; }
-.card { background: #161b22; border: 1px solid #21262d; border-radius: 12px; overflow: hidden; }
-.card-header { padding: 1rem 1.25rem; border-bottom: 1px solid #21262d; display: flex; align-items: center; justify-content: space-between; }
-.card-title { font-weight: 600; font-size: 0.95rem; }
-.card-body { padding: 1.25rem; }
-.refresh-time { font-size: 0.75rem; color: #8b949e; }
-.info-row { display: flex; justify-content: space-between; font-size: 0.88rem; padding: 6px 0; border-bottom: 1px solid #21262d; }
-.info-row:last-child { border-bottom: none; }
-.info-label { color: #8b949e; }
-.status-row { display: flex; align-items: center; gap: 10px; }
-.dot { width: 10px; height: 10px; border-radius: 50%; }
-.dot-ok { background: #3fb950; box-shadow: 0 0 8px #3fb950; }
-.dot-error { background: #f85149; }
-.dot-loading { background: #e3b341; animation: pulse 1.2s infinite; }
-@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
-.status-ok { color: #3fb950; font-weight: 600; }
-.status-error { color: #f85149; }
-.btn-link { background:none; border:none; color:#58a6ff; cursor:pointer; padding:0; font-size:0.85rem; }
-.btn-link:disabled { opacity:0.6; cursor:not-allowed; }
+.dash-wrap {
+  animation: rise-in 0.45s ease;
+}
+
+.hero {
+  margin-bottom: 1.8rem;
+}
+
+.hero-eyebrow {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.7rem;
+  margin-bottom: 0.45rem;
+}
+
+.hero-title {
+  font-size: clamp(1.45rem, 3.8vw, 2.3rem);
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.gradient {
+  background: linear-gradient(120deg, #94f0c3, #f4a261);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.dash-card {
+  overflow: hidden;
+  padding: 0;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.dash-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--line-strong);
+}
+
+.card-header {
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(16, 21, 20, 0.5);
+}
+
+.card-title {
+  font-weight: 700;
+  font-size: 0.93rem;
+  letter-spacing: 0.04em;
+}
+
+.card-body {
+  padding: 1.2rem;
+}
+
+.refresh-time {
+  font-size: 0.74rem;
+  color: var(--text-soft);
+  font-family: var(--font-mono);
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.88rem;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  color: var(--text-soft);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.chip {
+  border: 1px solid rgba(101, 214, 162, 0.35);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.8rem;
+  color: #b4f3d4;
+}
+
+.uuid-text {
+  font-family: var(--font-mono);
+  font-size: 0.73rem;
+  color: #c7ddd5;
+}
+
+.info-avatar {
+  justify-content: space-between;
+}
+
+.avatar-head {
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.28);
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dot-ok {
+  background: var(--brand);
+  box-shadow: 0 0 12px rgba(101, 214, 162, 0.45);
+}
+
+.dot-error {
+  background: var(--danger);
+}
+
+.dot-loading {
+  background: var(--accent);
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.38; }
+}
+
+.status-ok {
+  color: #b9f8da;
+  font-weight: 600;
+}
+
+.status-error {
+  color: #ffb3b3;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.85rem;
+}
+
+.btn-link:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 700px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .info-row {
+    font-size: 0.84rem;
+  }
+}
 </style>
