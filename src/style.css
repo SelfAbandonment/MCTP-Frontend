@@ -7,17 +7,17 @@
 }
 
 :root {
-  --bg-base: #0f1312;
-  --bg-soft: #161d1b;
-  --panel: rgba(25, 33, 31, 0.78);
-  --panel-strong: rgba(31, 40, 38, 0.95);
-  --line: rgba(166, 203, 188, 0.18);
-  --line-strong: rgba(166, 203, 188, 0.35);
-  --text-main: #edf7f3;
-  --text-soft: #a8bbb4;
-  --brand: #65d6a2;
-  --brand-deep: #1f9f78;
-  --accent: #f4a261;
+  --bg-base: #090806;
+  --bg-soft: #121009;
+  --panel: rgba(20, 15, 12, 0.88);
+  --panel-strong: rgba(28, 20, 15, 0.96);
+  --line: rgba(255, 138, 61, 0.18);
+  --line-strong: rgba(255, 138, 61, 0.34);
+  --text-main: #ede6dc;
+  --text-soft: #8a7f72;
+  --brand: #ff8a3d;
+  --brand-deep: #cc5a00;
+  --accent: #9f6aff;
   --danger: #ff6b6b;
   --radius: 14px;
   --shadow-panel: 0 24px 60px rgba(0, 0, 0, 0.35);
@@ -39,9 +39,10 @@ body {
 
 body {
   background-image:
-    radial-gradient(circle at 10% 15%, rgba(101, 214, 162, 0.2), transparent 36%),
-    radial-gradient(circle at 90% 15%, rgba(244, 162, 97, 0.14), transparent 30%),
-    radial-gradient(circle at 50% 100%, rgba(101, 214, 162, 0.08), transparent 35%);
+    radial-gradient(circle at 13% 14%, rgba(255, 138, 61, 0.18), transparent 34%),
+    radial-gradient(circle at 86% 10%, rgba(159, 106, 255, 0.1), transparent 32%),
+    radial-gradient(circle at 50% 100%, rgba(255, 120, 50, 0.08), transparent 40%),
+    linear-gradient(180deg, #090806 0%, #0d0a06 50%, #090806 100%);
   background-attachment: fixed;
 }
 
@@ -55,7 +56,7 @@ a {
 }
 
 .card {
-  background: linear-gradient(160deg, var(--panel), rgba(20, 27, 25, 0.72));
+  background: linear-gradient(160deg, var(--panel), rgba(18, 13, 9, 0.72));
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow-panel);
@@ -71,7 +72,7 @@ a {
   inset: -2px;
   border-radius: inherit;
   border: 1px solid transparent;
-  background: linear-gradient(120deg, rgba(101, 214, 162, 0.28), rgba(244, 162, 97, 0.1)) border-box;
+  background: linear-gradient(120deg, rgba(255, 138, 61, 0.24), rgba(200, 100, 30, 0.12)) border-box;
   mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
   pointer-events: none;
@@ -104,7 +105,7 @@ a {
 .form-input:focus {
   outline: none;
   border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(101, 214, 162, 0.18);
+  box-shadow: 0 0 0 3px rgba(255, 138, 61, 0.18);
   transform: translateY(-1px);
 }
 
@@ -122,7 +123,7 @@ a {
   border: 0;
   border-radius: 11px;
   background: linear-gradient(130deg, var(--brand) 0%, var(--brand-deep) 100%);
-  color: #072016;
+  color: #1a0a00;
   font-family: var(--font-display);
   font-weight: 700;
   letter-spacing: 0.03em;
@@ -133,7 +134,7 @@ a {
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 10px 26px rgba(101, 214, 162, 0.28);
+  box-shadow: 0 10px 26px rgba(255, 138, 61, 0.28);
   filter: saturate(1.05);
 }
 
@@ -168,7 +169,7 @@ a {
 }
 
 .link:hover {
-  color: #8ae8bc;
+  color: #ffb87a;
 }
 
 @keyframes rise-in {
