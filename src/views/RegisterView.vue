@@ -52,6 +52,8 @@ async function handleRegister() {
 <template>
   <div class="auth-wrap">
     <div class="card auth-card">
+      <div class="auth-glow"></div>
+      <p class="auth-eyebrow">Join The Grid</p>
       <h2 class="auth-title">注册</h2>
       <p class="text-muted text-center" style="margin-bottom:1.5rem">创建你的 MCTP 账户</p>
 
@@ -95,7 +97,42 @@ async function handleRegister() {
 </template>
 
 <style scoped>
-.auth-wrap { display: flex; justify-content: center; padding-top: 3rem; }
-.auth-card { width: 100%; max-width: 420px; }
-.auth-title { font-size: 1.4rem; font-weight: 700; text-align: center; margin-bottom: 0.5rem; }
+.auth-wrap {
+  display: flex;
+  justify-content: center;
+  padding-top: clamp(1.3rem, 5vw, 3.2rem);
+  animation: rise-in 0.45s ease;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 460px;
+  position: relative;
+}
+
+.auth-glow {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  left: -45px;
+  top: -55px;
+  background: radial-gradient(circle, rgba(244, 162, 97, 0.32) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.auth-eyebrow {
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+  font-size: 0.7rem;
+  margin-bottom: 0.2rem;
+}
+
+.auth-title {
+  font-size: 1.65rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 0.35rem;
+}
 </style>

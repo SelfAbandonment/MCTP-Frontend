@@ -50,7 +50,8 @@ async function handleLogin() {
 <template>
   <div class="auth-wrap">
     <div class="card auth-card">
-      <h2 class="auth-title">登录</h2>
+      <div class="auth-glow"></div>
+      <h2 class="auth-title">欢迎回来</h2>
       <p class="text-muted text-center" style="margin-bottom:1.5rem">登录你的 MCTP 账户</p>
 
       <div v-if="error" class="alert alert-error">{{ error }}</div>
@@ -78,7 +79,7 @@ async function handleLogin() {
           <rect x="1" y="12" width="10" height="10" fill="#00a4ef"/>
           <rect x="12" y="12" width="10" height="10" fill="#ffb900"/>
         </svg>
-        <span>{{ msLoading ? '跳转中...' : '使用微软账号登录（Minecraft）' }}</span>
+        <span>{{ msLoading ? '跳转中...' : '使用微软账号登录' }}</span>
       </button>
 
       <p class="text-center text-muted" style="margin-top:1.25rem">
@@ -90,12 +91,77 @@ async function handleLogin() {
 </template>
 
 <style scoped>
-.auth-wrap { display: flex; justify-content: center; padding-top: 3rem; }
-.auth-card { width: 100%; max-width: 420px; }
-.auth-title { font-size: 1.4rem; font-weight: 700; text-align: center; margin-bottom: 0.5rem; }
-.divider { display:flex; align-items:center; gap:0.75rem; color:#8a93a6; margin: 1.25rem 0; font-size: 0.85rem; }
-.divider::before, .divider::after { content:""; flex:1; height:1px; background:#e5e7eb; }
-.btn-ms { width:100%; display:flex; align-items:center; justify-content:center; gap:0.6rem; padding:0.65rem 1rem; border:1px solid #d0d4dc; background:#fff; color:#1f2937; font-weight:600; border-radius:6px; cursor:pointer; transition: background 0.15s; }
-.btn-ms:hover:not(:disabled) { background:#f5f6f8; }
-.btn-ms:disabled { opacity:0.6; cursor:not-allowed; }
+.auth-wrap {
+  display: flex;
+  justify-content: center;
+  padding-top: 2.4rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  position: relative;
+  animation: rise-in 0.5s ease;
+}
+
+.auth-glow {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  right: -40px;
+  top: -40px;
+  background: radial-gradient(circle, rgba(101, 214, 162, 0.4) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.auth-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: center;
+  margin-bottom: 0.3rem;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-soft);
+  margin: 1.25rem 0;
+  font-size: 0.83rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.btn-ms {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.72rem 1rem;
+  border: 1px solid var(--line-strong);
+  background: rgba(13, 17, 16, 0.5);
+  color: var(--text-main);
+  font-weight: 600;
+  border-radius: 11px;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-ms:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--brand);
+}
+
+.btn-ms:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 </style>

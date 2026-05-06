@@ -6,6 +6,9 @@ import { useAuthStore } from '@/stores/auth'
 // 错误码 -> 中文友好提示
 const ERR_MAP = {
   ms_oauth_not_configured: '后端尚未配置 Microsoft OAuth，请联系管理员。',
+  ms_app_registration_invalid: 'Azure 应用注册不符合 Minecraft 登录要求，请检查应用类型与账号类型配置。',
+  mc_already_bound: '该 Minecraft 账号已绑定到其他用户，无法重复绑定。',
+  ms_network_error: '无法连接 Microsoft/Xbox 服务（网络或 DNS 问题），请稍后重试。',
   ms_token_failed: 'Microsoft 令牌交换失败，请重试。',
   xbl_failed: 'Xbox Live 验证失败，请重试。',
   xsts_no_xbox_account: '该微软账号没有 Xbox 档案，请先到 https://xbox.com 创建免费 Xbox 账户后重试。',
@@ -63,9 +66,10 @@ function backToLogin() {
 <template>
   <div class="cb-wrap">
     <div class="card cb-card">
+      <p class="cb-eyebrow">OAuth Callback</p>
       <h2 class="cb-title">微软登录</h2>
       <p v-if="status === 'processing'" class="text-muted">处理中…</p>
-      <p v-else-if="status === 'success'" style="color:#16a34a">{{ message }}</p>
+      <p v-else-if="status === 'success'" class="cb-success">{{ message }}</p>
       <template v-else>
         <p class="text-error">{{ message }}</p>
         <button class="btn-primary" type="button" @click="backToLogin">返回登录</button>
@@ -75,8 +79,39 @@ function backToLogin() {
 </template>
 
 <style scoped>
-.cb-wrap { display:flex; justify-content:center; padding-top:4rem; }
-.cb-card { width:100%; max-width:420px; text-align:center; }
-.cb-title { font-size:1.3rem; font-weight:700; margin-bottom:1rem; }
-.text-error { color:#dc2626; margin-bottom:1rem; }
+.cb-wrap {
+  display: flex;
+  justify-content: center;
+  padding-top: clamp(1.6rem, 8vw, 4.3rem);
+  animation: rise-in 0.45s ease;
+}
+
+.cb-card {
+  width: 100%;
+  max-width: 460px;
+  text-align: center;
+}
+
+.cb-eyebrow {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.7rem;
+  margin-bottom: 0.2rem;
+}
+
+.cb-title {
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin-bottom: 0.9rem;
+}
+
+.cb-success {
+  color: #b8f6d9;
+}
+
+.text-error {
+  color: #ffb3b3;
+  margin-bottom: 1rem;
+}
 </style>
