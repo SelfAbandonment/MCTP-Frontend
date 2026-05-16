@@ -15,9 +15,9 @@ MCTP 项目的前端 Dashboard，基于 Vue 3 + Vite 构建，实时展示后端
 | 地址 | 说明 |
 |------|------|
 | [Frontend](https://selfabandonment.github.io/MCTP-Frontend/) | GitHub Pages 部署 |
-| [Backend API](https://mctp-api.onrender.com) | Django REST Framework |
-| [Swagger UI](https://mctp-api.onrender.com/api/docs/) | 交互式 API 文档 |
-| [ReDoc](https://mctp-api.onrender.com/api/redoc/) | ReDoc API 文档 |
+| [Backend API](http://api.mcreatopla.top:21009) | Django REST Framework |
+| [Swagger UI](http://api.mcreatopla.top:21009/api/docs/) | 交互式 API 文档 |
+| [OpenAPI Schema](http://api.mcreatopla.top:21009/api/schema/) | OpenAPI 3.0 Schema |
 
 ## 功能
 
@@ -86,7 +86,7 @@ npm run dev
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
-| `VITE_API_BASE_URL` | 后端 API 地址 | `https://mctp-api.onrender.com` |
+| `VITE_API_BASE_URL` | 后端 API 地址 | `http://api.mcreatopla.top:21009` |
 
 ## 部署
 
