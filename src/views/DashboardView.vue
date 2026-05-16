@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { authApi } from '@/api/auth'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://mctp-api.onrender.com'
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://api.mcreatopla.top:21009'
 const auth = useAuthStore()
 
 const health = ref(null)
