@@ -1,0 +1,9 @@
+/* Smiley Sans (得意黑) — display typeface, SIL OFL 1.1.
+   Subset to the characters used by this site: scripts/subset-font.py */
+@font-face {
+  font-family: 'Smiley Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/smiley-sans.woff2') format('woff2');
+}

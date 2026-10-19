@@ -6,10 +6,18 @@ export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref(localStorage.getItem('access') || null)
   const refreshToken = ref(localStorage.getItem('refresh') || null)
   const user = ref(null)
+  const sessionError = ref('')
+  let sessionRequest = null
+  let refreshRequest = null
+  let generation = 0
 
   const isLoggedIn = computed(() => !!accessToken.value)
+  const isStaff = computed(() => !!user.value?.is_staff && user.value?.is_active !== false)
 
   function setTokens(access, refresh) {
+    if (typeof access !== 'string' || !access || typeof refresh !== 'string' || !refresh) {
+      throw new Error('服务返回的登录凭据不完整，请重新登录')
+    }
     accessToken.value = access
     refreshToken.value = refresh
     localStorage.setItem('access', access)
@@ -25,13 +33,22 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function consumeMicrosoftCallback({ access, refresh }) {
     setTokens(access, refresh)
-    await fetchMe()
+    try {
+      await fetchMe()
+    } catch (error) {
+      logout()
+      throw error
+    }
   }
 
   function logout() {
+    generation++
     accessToken.value = null
     refreshToken.value = null
     user.value = null
+    sessionError.value = ''
+    sessionRequest = null
+    refreshRequest = null
     localStorage.removeItem('access')
     localStorage.removeItem('refresh')
   }
@@ -39,32 +56,62 @@ export const useAuthStore = defineStore('auth', () => {
   async function login(username, password) {
     const res = await authApi.login({ username, password })
     setTokens(res.data.access, res.data.refresh)
-    await fetchMe()
+    try {
+      await fetchMe()
+    } catch (error) {
+      logout()
+      throw error
+    }
   }
 
   async function register(username, email, password, passwordConfirm) {
     const res = await authApi.register({ username, email, password, password_confirm: passwordConfirm })
-    // register 成功(201)后自动 login，login 失败单独抛出不影响注册结果
     if (res.status === 201) {
-      await login(username, password)
+      try {
+        await login(username, password)
+      } catch (error) {
+        error.registrationSucceeded = true
+        throw error
+      }
     }
   }
 
-  async function refresh() {
-    const res = await authApi.refresh({ refresh: refreshToken.value })
-    accessToken.value = res.data.access
-    localStorage.setItem('access', res.data.access)
+  function refresh() {
+    if (refreshRequest) return refreshRequest
+    const version = generation
+    const request = authApi.refresh({ refresh: refreshToken.value }).then((res) => {
+      if (version !== generation) throw new Error('会话已退出，请重新登录')
+      setTokens(res.data.access, res.data.refresh || refreshToken.value)
+    }).finally(() => {
+      if (refreshRequest === request) refreshRequest = null
+    })
+    refreshRequest = request
+    return refreshRequest
   }
 
   async function fetchMe() {
+    const version = generation
     const res = await authApi.me()
+    if (version !== generation) throw new Error('会话已退出，请重新登录')
     user.value = res.data.data
+    sessionError.value = ''
+    return user.value
   }
 
-  // 初始化：如果有 token 就拉用户信息
-  if (accessToken.value) {
-    fetchMe().catch(() => logout())
+  function ensureSession() {
+    if (!accessToken.value || user.value) return Promise.resolve(user.value)
+    if (!sessionRequest) {
+      const version = generation
+      const request = fetchMe().catch((error) => {
+        if (version === generation) sessionError.value = '无法读取玩家资料，请重试'
+        throw error
+      }).finally(() => {
+        if (sessionRequest === request) sessionRequest = null
+      })
+      sessionRequest = request
+    }
+    return sessionRequest
   }
 
-  return { accessToken, refreshToken, user, isLoggedIn, login, register, logout, refresh, fetchMe, microsoftLogin, consumeMicrosoftCallback }
+  return { accessToken, refreshToken, user, sessionError, isLoggedIn, isStaff, login, register, logout, refresh, fetchMe, ensureSession, microsoftLogin, consumeMicrosoftCallback }
 })
