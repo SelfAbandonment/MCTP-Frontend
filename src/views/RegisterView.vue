@@ -2,47 +2,40 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import AuthLayout from '@/components/AuthLayout.vue'
+import { errorMessage, fieldErrors } from '@/utils/errors'
 
 const router = useRouter()
 const auth = useAuthStore()
-
 const form = ref({ username: '', email: '', password: '', password_confirm: '' })
 const loading = ref(false)
 const errors = ref({})
 const globalError = ref('')
-
-function fieldError(key) {
-  return errors.value[key]?.[0] || null
-}
+const registrationSucceeded = ref(false)
+const fields = [
+  { key: 'username', label: '用户名', type: 'text', autocomplete: 'username', max: 150 },
+  { key: 'email', label: '邮箱', type: 'email', autocomplete: 'email', max: 254 },
+  { key: 'password', label: '密码', type: 'password', autocomplete: 'new-password' },
+  { key: 'password_confirm', label: '确认密码', type: 'password', autocomplete: 'new-password' },
+]
 
 async function handleRegister() {
   errors.value = {}
   globalError.value = ''
+  if (form.value.password !== form.value.password_confirm) {
+    errors.value.password_confirm = '两次密码不一致'
+    return
+  }
   loading.value = true
   try {
-    await auth.register(
-      form.value.username,
-      form.value.email,
-      form.value.password,
-      form.value.password_confirm,
-    )
-    router.push('/dashboard')
+    await auth.register(form.value.username, form.value.email, form.value.password, form.value.password_confirm)
+    await router.push('/dashboard')
   } catch (e) {
-    const body = e.response?.data
-    const status = e.response?.status
-    if (status === 400 && body?.data && typeof body.data === 'object') {
-      // 后端校验错误，展示字段级别提示
-      errors.value = body.data
-    } else if (status === 400) {
-      globalError.value = body?.message || '注册失败，请检查填写内容'
-    } else if (e.code === 'ECONNABORTED') {
-      globalError.value = '请求超时，服务器可能正在启动，请稍后重试'
-    } else if (!e.response) {
-      globalError.value = '网络错误，请检查网络连接'
-    } else {
-      // 注册成功但自动登录失败，引导去手动登录
-      globalError.value = '注册成功！请前往登录页登录'
-    }
+    registrationSucceeded.value = !!e.registrationSucceeded
+    errors.value = fieldErrors(e)
+    globalError.value = registrationSucceeded.value
+      ? '账号已创建，但自动登录失败。请前往登录页。'
+      : errorMessage(e, '注册失败，请检查填写内容')
   } finally {
     loading.value = false
   }
@@ -50,89 +43,83 @@ async function handleRegister() {
 </script>
 
 <template>
-  <div class="auth-wrap">
-    <div class="card auth-card">
-      <div class="auth-glow"></div>
-      <p class="auth-eyebrow">Join The Grid</p>
-      <h2 class="auth-title">注册</h2>
-      <p class="text-muted text-center" style="margin-bottom:1.5rem">创建你的 MCTP 账户</p>
-
-      <div v-if="globalError" class="alert alert-error">{{ globalError }}</div>
-
-      <form @submit.prevent="handleRegister">
-        <div class="form-group">
-          <label class="form-label">用户名</label>
-          <input v-model="form.username" :class="['form-input', errors.username && 'error']"
-            type="text" placeholder="请输入用户名" required autocomplete="username" />
-          <span v-if="errors.username" class="form-error">{{ errors.username[0] }}</span>
-        </div>
-        <div class="form-group">
-          <label class="form-label">邮箱</label>
-          <input v-model="form.email" :class="['form-input', errors.email && 'error']"
-            type="email" placeholder="请输入邮箱" required autocomplete="email" />
-          <span v-if="errors.email" class="form-error">{{ errors.email[0] }}</span>
-        </div>
-        <div class="form-group">
-          <label class="form-label">密码</label>
-          <input v-model="form.password" :class="['form-input', errors.password && 'error']"
-            type="password" placeholder="至少 8 位，包含字母和数字" required autocomplete="new-password" />
-          <span v-if="errors.password" class="form-error">{{ errors.password[0] }}</span>
-        </div>
-        <div class="form-group">
-          <label class="form-label">确认密码</label>
-          <input v-model="form.password_confirm" class="form-input"
-            type="password" placeholder="再次输入密码" required autocomplete="new-password" />
-        </div>
-        <button class="btn-primary" type="submit" :disabled="loading">
-          {{ loading ? '注册中...' : '注册' }}
-        </button>
-      </form>
-
-      <p class="text-center text-muted" style="margin-top:1.25rem">
-        已有账号？
-        <RouterLink to="/login" class="link">立即登录</RouterLink>
-      </p>
+  <AuthLayout>
+    <p class="eyebrow">
+      新的故事
+    </p>
+    <h2>留个位置，给你。</h2>
+    <p class="auth-description">
+      创建账号，开始认识这个世界。
+    </p>
+    <div
+      v-if="globalError"
+      class="alert alert-error"
+      role="alert"
+    >
+      {{ globalError }}
+      <RouterLink
+        v-if="registrationSucceeded"
+        to="/login"
+        class="link"
+      >
+        前往登录
+      </RouterLink>
     </div>
-  </div>
+    <form
+      v-if="!registrationSucceeded"
+      @submit.prevent="handleRegister"
+    >
+      <div
+        v-for="field in fields"
+        :key="field.key"
+        class="form-group"
+      >
+        <label
+          class="form-label"
+          :for="`register-${field.key}`"
+        >{{ field.label }}</label>
+        <input
+          :id="`register-${field.key}`"
+          v-model="form[field.key]"
+          :class="['form-input', { error: errors[field.key] }]"
+          :type="field.type"
+          :autocomplete="field.autocomplete"
+          :maxlength="field.max"
+          :aria-invalid="!!errors[field.key]"
+          :aria-describedby="errors[field.key] ? `register-error-${field.key}` : undefined"
+          required
+        >
+        <span
+          v-if="errors[field.key]"
+          :id="`register-error-${field.key}`"
+          class="form-error"
+        >{{ errors[field.key] }}</span>
+      </div>
+      <button
+        class="btn-primary"
+        type="submit"
+        :disabled="loading"
+      >
+        {{ loading ? '创建中…' : '创建账号 ↗' }}
+      </button>
+    </form>
+    <p class="auth-switch">
+      已有账号？
+      <RouterLink
+        to="/login"
+        class="link"
+      >
+        登录
+      </RouterLink>
+    </p>
+  </AuthLayout>
 </template>
 
 <style scoped>
-.auth-wrap {
-  display: flex;
-  justify-content: center;
-  padding-top: clamp(1.3rem, 5vw, 3.2rem);
-  animation: rise-in 0.45s ease;
-}
-
-.auth-card {
-  width: 100%;
-  max-width: 460px;
-  position: relative;
-}
-
-.auth-glow {
-  position: absolute;
-  width: 140px;
-  height: 140px;
-  left: -45px;
-  top: -55px;
-  background: radial-gradient(circle, rgba(244, 162, 97, 0.32) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-.auth-eyebrow {
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--accent);
-  font-size: 0.7rem;
-  margin-bottom: 0.2rem;
-}
-
-.auth-title {
-  font-size: 1.65rem;
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: 0.35rem;
+.auth-description { color: var(--text-soft); font-size: 13px; }
+.btn-primary { width: 100%; margin-top: 4px; }
+.auth-switch { margin-top: 24px; font-size: 12px; text-align: center; color: var(--text-soft); }
+@media (max-width: 900px) {
+  .auth-switch { margin-top: 20px; }
 }
 </style>
