@@ -9,7 +9,7 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const auth = useAuthStore()
-  if (auth.accessToken) {
+  if (auth.accessToken && !config.skipAuth) {
     config.headers.Authorization = `Bearer ${auth.accessToken}`
   }
   return config
@@ -20,6 +20,7 @@ api.interceptors.response.use(
   async (err) => {
     const auth = useAuthStore()
     const originalRequest = err.config || {}
+    if (originalRequest.skipAuth) return Promise.reject(err)
     const isRefreshRequest = originalRequest.url?.includes('/api/v1/auth/token/refresh/')
 
     if (err.response?.status === 401 && auth.refreshToken && !originalRequest._retry && !isRefreshRequest) {
@@ -29,9 +30,13 @@ api.interceptors.response.use(
         originalRequest.headers = originalRequest.headers || {}
         originalRequest.headers.Authorization = `Bearer ${auth.accessToken}`
         return api.request(originalRequest)
-      } catch {
-        auth.logout()
+      } catch (refreshError) {
+        if ([400, 401, 403].includes(refreshError.response?.status)) auth.logout()
+        return Promise.reject(refreshError)
       }
+    }
+    if (err.response?.status === 401 && !isRefreshRequest && !originalRequest.url?.includes('/api/v1/auth/token/')) {
+      auth.logout()
     }
     return Promise.reject(err)
   }
