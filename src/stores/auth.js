@@ -37,7 +37,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function login(username, password) {
-    await allauthApi.login({ username, password })
+    await loginWithSessionConflictRetry(() => allauthApi.login({ username, password }))
     try {
       await adoptSession()
     } catch (error) {
@@ -47,16 +47,25 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function register(username, email, password) {
-    try {
-      await allauthApi.signup({ username, email, password })
-    } catch (error) {
-      throw error
-    }
+    await loginWithSessionConflictRetry(() => allauthApi.signup({ username, email, password }))
     try {
       await adoptSession()
     } catch (error) {
       error.registrationSucceeded = true
       throw error
+    }
+  }
+
+  // allauth rejects /auth/login with 409 when this browser already has an
+  // authenticated session (for example, a Django admin session). Sign that
+  // stale session out and retry once with the credentials the user entered.
+  async function loginWithSessionConflictRetry(request) {
+    try {
+      return await request()
+    } catch (error) {
+      if (error?.status !== 409) throw error
+      await allauthApi.logout().catch(() => {})
+      return request()
     }
   }
 
