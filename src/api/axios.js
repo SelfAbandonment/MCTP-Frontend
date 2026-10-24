@@ -1,8 +1,10 @@
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://api.mcreatopla.top:21009',
+  baseURL: API_BASE_URL,
   timeout: 10000,
   withCredentials: true,
 })

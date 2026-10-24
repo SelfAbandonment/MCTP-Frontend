@@ -28,7 +28,7 @@ async function handleRegister() {
   }
   loading.value = true
   try {
-    await auth.register(form.value.username, form.value.email, form.value.password, form.value.password_confirm)
+    await auth.register(form.value.username, form.value.email, form.value.password)
     await router.push('/dashboard')
   } catch (e) {
     registrationSucceeded.value = !!e.registrationSucceeded

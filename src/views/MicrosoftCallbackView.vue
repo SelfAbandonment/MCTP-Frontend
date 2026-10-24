@@ -3,29 +3,31 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
-// 错误码 -> 中文友好提示
+// allauth error codes -> friendly Chinese messages.
 const ERR_MAP = {
-  ms_oauth_not_configured: '后端尚未配置微软登录，请联系管理员。',
-  ms_app_registration_invalid: '应用注册不符合我的世界登录要求，请检查应用类型与账号类型配置。',
-  mc_already_bound: '该我的世界账号已绑定到其他用户，无法重复绑定。',
-  ms_network_error: '无法连接微软或游戏验证服务（网络问题），请稍后重试。',
-  ms_token_failed: '微软登录凭证交换失败，请重试。',
-  xbl_failed: '游戏账号验证失败，请重试。',
-  xsts_no_xbox_account: '该微软账号没有游戏档案，请先创建免费档案后重试。',
-  xsts_country_blocked: '该微软账号所在国家或地区不受支持。',
-  xsts_minor_account: '未成年账号需要先被加入家庭组才能登录。',
-  xsts_adult_verification: '该账号需要完成成年人验证。',
-  xsts_failed: '游戏账号校验失败。',
-  mc_login_failed: '我的世界登录失败，请重试。',
-  mc_not_owned: '该微软账号未拥有我的世界，请先购买后再登录。',
-  mc_profile_failed: '获取我的世界档案失败。',
+  access_denied: '你取消了微软授权。',
+  cancelled: '你取消了微软授权。',
+  permission_denied: '登录失败：该微软账号需要拥有 Minecraft 并完成账号校验。',
+  signup_closed: '当前未开放注册，请联系管理员。',
   invalid_state: '登录状态校验失败，请重新发起登录。',
-  missing_code: '回调参数缺失。',
+  unknown: '登录失败，请稍后重试。',
   server_error: '服务器内部错误，请稍后重试。',
-  access_denied: '你取消了授权。',
+  ms_oauth_not_configured: '后端尚未配置微软登录，请联系管理员。',
+  ms_app_registration_invalid: '微软应用注册配置不符合 Minecraft 登录要求。',
+  mc_already_bound: '该 Minecraft 账号已绑定到其他用户。',
+  ms_network_error: '无法连接微软或 Xbox 服务，请稍后重试。',
+  ms_token_failed: '微软登录凭证交换失败，请重试。',
+  xbl_failed: 'Xbox Live 账号验证失败，请重试。',
+  xsts_no_xbox_account: '该微软账号没有 Xbox 档案，请先创建免费档案。',
+  xsts_country_blocked: '该微软账号所在地区不受支持。',
+  xsts_minor_account: '未成年账号需要先加入家庭组。',
+  xsts_adult_verification: '该账号需要完成成年人验证。',
+  xsts_failed: 'Xbox 账号校验失败。',
+  mc_login_failed: 'Minecraft 登录失败，请重试。',
+  mc_not_owned: '该微软账号未拥有 Minecraft，请先购买后再登录。',
+  mc_profile_failed: '获取 Minecraft 档案失败。',
 }
 
-// 后端可能返回英文错误描述；只在含中文时直接展示，避免页面出现英文。
 const hasChinese = (value) => typeof value === 'string' && /[\u4e00-\u9fa5]/.test(value)
 
 const route = useRoute()
@@ -37,26 +39,25 @@ const message = ref('')
 
 onMounted(async () => {
   const q = route.query
-  // Remove credentials from browser history before making any network request.
-  await router.replace({ path: route.path })
-  if (q.error) {
+  // allauth appends ?error=... before the hash fragment, so also read the
+  // top-level search params. Clean the address bar before any network request.
+  const search = new URLSearchParams(window.location.search)
+  const error = q.error || search.get('error')
+  const errorDescription = q.error_description || search.get('error_description')
+  window.history.replaceState(null, '', `${window.location.pathname}#${route.path}`)
+
+  if (error) {
     status.value = 'error'
-    message.value = ERR_MAP[q.error] || (hasChinese(q.error_description) ? q.error_description : '登录失败，请返回登录页重试。')
+    message.value = ERR_MAP[error] || (hasChinese(errorDescription) ? errorDescription : '登录失败，请返回登录页重试。')
     return
   }
-  const access = q.access
-  const refresh = q.refresh
-  if (typeof access !== 'string' || typeof refresh !== 'string' || !access || !refresh) {
-    status.value = 'error'
-    message.value = '回调参数缺失'
-    return
-  }
+
   try {
-    await auth.consumeMicrosoftCallback({ access, refresh })
+    await auth.consumeMicrosoftCallback()
     status.value = 'success'
-    message.value = `欢迎回来，${q.mc_username || ''}`
+    message.value = '欢迎回来，正在进入你的世界…'
     await router.replace('/dashboard')
-  } catch (e) {
+  } catch {
     status.value = 'error'
     message.value = '登录态写入失败，请重新登录'
   }
