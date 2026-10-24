@@ -79,7 +79,7 @@ async function bind() {
   bindingError.value = ''
   bindingMessage.value = ''
   try {
-    await auth.microsoftLogin()
+    await auth.microsoftConnect()
   } catch (e) {
     bindingError.value = errorMessage(e, '无法发起微软绑定')
     bindingBusy.value = false

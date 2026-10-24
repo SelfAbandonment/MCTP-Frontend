@@ -72,8 +72,11 @@ MCTP / 方块社区前端，基于 Vue 3 + Vite 构建：Minecraft 主题的电�
 | 公告（无需登录，不发送账号令牌） | `GET /api/v1/announcements/` |
 | 管理公告 | `GET/POST /api/v1/manage/announcements/`、`GET/PATCH/DELETE /api/v1/manage/announcements/{id}/` |
 | 管理玩家 | `GET /api/v1/manage/players/?search=&page=`、`GET/PATCH /api/v1/manage/players/{id}/` |
+| 登录 / 注册 / 微软登录 | allauth headless：`/_allauth/browser/v1/auth/login|signup|session`、`/_allauth/browser/v1/auth/provider/redirect` |
+| 会话换 JWT | `POST /api/v1/auth/token/session/`（登录/注册/微软回调完成后由前端调用） |
 | 玩家资料 | `GET/PUT /api/v1/auth/me/` |
 | 修改密码 | `POST /api/v1/auth/password/` |
+| 解绑微软/Minecraft | `DELETE /api/v1/auth/microsoft/unbind/` |
 
 列表响应为 `{code, message, data: {results, count, next, previous}}`；具体以配套后端 OpenAPI 为准。
 公告仅使用纯文本渲染，不解释 HTML。公开列表排除草稿与尚未到发布时间的公告。
@@ -82,7 +85,11 @@ MCTP / 方块社区前端，基于 Vue 3 + Vite 构建：Minecraft 主题的电�
 
 会话恢复失败会显示可重试页面；临时网络错误不会清除登录凭据。
 并发刷新共用一次请求，并保存轮换后的 refresh token。密码更新后要求重新登录。
-Microsoft 回调在请求用户资料前清除地址中的凭据；真实 OAuth 仍需配置应用、回调地址及有效账号。
+
+认证由后端的 **django-allauth** 接管：密码登录、注册、微软/Minecraft 登录都走 allauth headless；
+成功后前端用 `POST /api/v1/auth/token/session/` 把 Django session 换成 SimpleJWT，后续接口继续用 Bearer Token。
+微软登录使用 allauth 的自定义 provider（`/accounts/microsoft/login/callback/`），不再把 token 拼进前端 URL。
+本地联调时前端与 API 请使用同一 host（都 `localhost` 或都 `127.0.0.1`），否则 session/CSRF cookie 不共享。
 
 ## 本地开发
 
