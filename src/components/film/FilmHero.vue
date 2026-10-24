@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import CinematicButton from '@/components/cinematic/CinematicButton.vue'
 import Icon from '@/components/ui/Icon.vue'
 import FilmLoader from './FilmLoader.vue'
@@ -22,27 +22,28 @@ const current = computed(() => shots[currentIndex.value])
 
 let preloader = null
 
-function warmNextShot() {
-  const next = shots[(currentIndex.value + 1) % shots.length]
-  if (!next) return
+// Only fetch a shot when the user is about to switch to it (hover/focus of the
+// chapter buttons). Eagerly warming the 4.95 MB city clip right after load made
+// the initial page ~7 MB.
+function preloadShot(index) {
+  const shot = shots[index]
+  if (!shot) return
+  if (preloader?.dataset.src === shot.video) return
   if (preloader) {
     preloader.remove()
     preloader = null
   }
   const video = document.createElement('video')
-  video.src = next.video
+  video.src = shot.video
   video.preload = 'auto'
   video.muted = true
   video.playsInline = true
+  video.dataset.src = shot.video
   video.setAttribute('aria-hidden', 'true')
   video.style.cssText = 'position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;'
   document.body.appendChild(video)
   preloader = video
 }
-
-watch(currentIndex, () => {
-  nextTick(warmNextShot)
-})
 
 onBeforeUnmount(() => {
   preloader?.remove()
@@ -63,7 +64,6 @@ function handleLoaded() {
   window.setTimeout(() => {
     loading.value = false
   }, 520)
-  nextTick(warmNextShot)
 }
 
 function goAbout() {
@@ -129,29 +129,29 @@ useMotionContext(root, ({ gsap, reduced }) => {
     />
 
     <header class="hero__type">
-      <h1 class="hero__title hero__title--top display display--xl">
-        方块之间
+      <h1
+        class="hero__title hero__title--top display display--xl"
+        aria-label="MCREATOPIA 方块社区"
+      >
+        MCREATOPIA
       </h1>
       <p
         class="hero__title hero__title--bottom display display--xl"
         aria-hidden="true"
       >
-        自有天地
+        欢迎加入
       </p>
     </header>
 
     <div class="hero__intro">
-      <p class="film-mark">
-        一起生活，一起创造
-      </p>
       <div class="hero__actions">
         <CinematicButton
-          title="走进世界"
+          title="加入世界"
           to="/register"
           variant="bone"
         />
         <CinematicButton
-          title="入服指北"
+          title="入服指南"
           :href="joinGuide"
           variant="ghost"
           external
@@ -173,6 +173,8 @@ useMotionContext(root, ({ gsap, reduced }) => {
           :class="{ 'is-active': currentIndex === index }"
           :aria-pressed="currentIndex === index"
           @click="selectShot(index)"
+          @pointerenter="preloadShot(index)"
+          @focus="preloadShot(index)"
         >
           <span class="hero__shot-num">0{{ index + 1 }}</span>
           <span>{{ shot.name }}</span>
@@ -293,13 +295,13 @@ useMotionContext(root, ({ gsap, reduced }) => {
 }
 
 .hero__title--top {
-  top: clamp(78px, 12vh, 140px);
+  top: clamp(39px, 12vh, 70px);
   left: var(--page-pad);
 }
 
 .hero__title--bottom {
   right: var(--page-pad);
-  bottom: clamp(120px, 17vh, 210px);
+  bottom: clamp(60px, 17vh, 105px);
   text-align: right;
 }
 

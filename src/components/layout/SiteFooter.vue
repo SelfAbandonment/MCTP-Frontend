@@ -6,7 +6,7 @@ import Icon from '@/components/ui/Icon.vue'
 const year = computed(() => new Date().getFullYear())
 const joinGuide = 'https://docs.qq.com/space/DTXNidGZ1S2FncG9v'
 const repo = 'https://github.com/SelfAbandonment/MCTP-Frontend'
-const words = ['一起生活', '一起创造', '方块之间', '自有天地', '世界仍在生长']
+const words = ['玩家社区', '生存服务器', '入服指引', '更新记录', '加入我们']
 </script>
 
 <template>
@@ -90,11 +90,11 @@ const words = ['一起生活', '一起创造', '方块之间', '自有天地', '
       class="site-footer__wordmark display"
       aria-hidden="true"
     >
-      MCTP
+      MCREATOPIA
     </div>
 
     <div class="site-footer__bottom">
-      <span>© {{ year }} MCTP 方块社区</span>
+      <span>© {{ year }} MCTP MC社区</span>
       <span>一起生活，一起创造</span>
     </div>
   </footer>
