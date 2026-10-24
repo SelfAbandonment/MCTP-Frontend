@@ -19,7 +19,7 @@ const playerTarget = computed(() => (auth.isLoggedIn ? '/dashboard' : '/login'))
 const joinGuide = 'https://docs.qq.com/space/DTXNidGZ1S2FncG9v'
 
 const navLinks = computed(() => [
-  { label: '世界', to: '/' },
+  { label: '首页', to: '/' },
   { label: '公告', to: '/announcements' },
   { label: '入服', href: joinGuide, external: true },
   { label: '玩家中心', to: playerTarget.value },
@@ -93,7 +93,7 @@ onUnmounted(() => {
       <RouterLink
         class="brand"
         to="/"
-        aria-label="MCTP 方块社区首页"
+        aria-label="MCTP"
         @click="closeMenu"
       >
         <span
@@ -101,7 +101,6 @@ onUnmounted(() => {
           aria-hidden="true"
         />
         <span class="brand__name display">MCTP</span>
-        <span class="brand__sub">方块社区</span>
       </RouterLink>
 
       <nav
@@ -272,12 +271,6 @@ onUnmounted(() => {
   letter-spacing: 0.02em;
 }
 
-.brand__sub {
-  font-size: 10px;
-  letter-spacing: 0.3em;
-  color: rgba(242, 239, 226, 0.5);
-  transform: translateY(1px);
-}
 
 .site-nav {
   display: flex;
