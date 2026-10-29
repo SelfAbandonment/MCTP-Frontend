@@ -5,41 +5,67 @@ pipeline {
         nodejs 'Nodejs24'
     }
 
+    options {
+        timeout(time: 20, unit: 'MINUTES')
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '20', artifactNumToKeepStr: '10'))
+    }
+
     stages {
         stage('安装依赖') {
             steps {
-                sh 'npm ci --no-audit'
+                sh 'NODE_ENV=development npm ci --no-audit --no-fund'
+            }
+        }
+
+        stage('代码检查') {
+            parallel {
+                stage('ESLint') {
+                    steps {
+                        sh 'npm run lint:check'
+                    }
+                }
+                stage('单元测试') {
+                    steps {
+                        sh 'npm test'
+                    }
+                }
+            }
+        }
+
+        stage('依赖安全扫描') {
+            steps {
+                sh 'npm audit --audit-level=high'
             }
         }
 
         stage('构建项目') {
             steps {
-                sh 'npm run build' // 必须先构建生成 dist 目录
+                sh 'NODE_ENV=production npm run build -- --base=/'
             }
         }
 
-        // --- 新增的 Lighthouse 阶段 ---
         stage('Lighthouse 性能检测') {
-            // 使用专用的 Lighthouse Docker 镜像
-            agent { 
-                docker { 
-                    image 'kanti/lighthouse-ci' 
-                    // 让容器内的当前工作目录与 Jenkins 工作区一致
-                    reuseNode true 
-                } 
+            agent {
+                docker {
+                    image 'kanti/lighthouse-ci'
+                    reuseNode true
+                }
             }
             steps {
-                // 运行 lhci autorun 读取 lighthouserc.js
-                sh 'lhci autorun'
+                sh 'lhci autorun --config=./lighthouserc.cjs'
             }
         }
-        // -----------------------------
     }
 
     post {
         always {
-            //HTML Publisher 插件 归档报告
             archiveArtifacts artifacts: 'dist/**', allowEmptyArchive: true
+            // Lighthouse 的 JSON/HTML 报告，便于回溯评分明细
+            archiveArtifacts artifacts: '.lighthouseci/**', allowEmptyArchive: true
+        }
+        unsuccessful {
+            echo '构建未成功：请检查「代码检查」「依赖安全扫描」「Lighthouse 性能检测」阶段日志。'
         }
     }
 }
