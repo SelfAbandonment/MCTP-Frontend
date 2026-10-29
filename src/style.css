@@ -47,6 +47,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 ::selection { background: var(--brand); color: #071006; }
 main:focus { outline: none; }
 .app { min-height: 100vh; display: flex; flex-direction: column; }
+/* 路由组件是懒加载的，首屏 <main> 为空时 footer 会被顶到可视区，
+   等路由 chunk 到达再被推走 —— 实测 CLS 0.93。
+   预留一屏高度，让 footer 一开始就在首屏之外（不可见元素的位移不计入 CLS）。 */
+.app > main { min-height: 100svh; }
 .site-main { width: min(1240px, 90%); margin: 0 auto; padding: 132px 0 92px; flex: 1; }
 .main-home { width: 100%; flex: 1; padding: 0; }
 .skip-link { position: fixed; top: 8px; left: 8px; transform: translateY(-160%); padding: 12px 20px; background: var(--brand); color: #071006; z-index: 100; font-weight: 600; }
