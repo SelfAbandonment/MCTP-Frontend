@@ -6,6 +6,7 @@ import Icon from '@/components/ui/Icon.vue'
 import { prefersReducedMotion, useMotionContext } from '@/animations/motion'
 
 const root = ref(null)
+const scroller = ref(null)
 const stage = ref(null)
 const frame = ref(null)
 const image = ref(null)
@@ -27,15 +28,16 @@ useMotionContext(root, ({ gsap, reduced }) => {
     const frameEl = frame.value
     if (!stageEl || !frameEl) return
 
+    // 用 CSS sticky 固定画面，而不是 ScrollTrigger 的 pin。
+    // pin 会在首屏渲染后插入 150vh 的 pin-spacer，把下面的区块整体推下去，
+    // 实测 CLS 约 0.95；sticky 由 CSS 在首次绘制前就预留高度，不产生位移。
     const timeline = gsap.timeline({
       defaults: { ease: 'none' },
       scrollTrigger: {
-        trigger: stageEl,
+        trigger: scroller.value || stageEl,
         start: 'top top',
-        end: '+=150%',
+        end: 'bottom bottom',
         scrub: true,
-        pin: true,
-        anticipatePin: 1,
         invalidateOnRefresh: true,
       },
     })
@@ -116,48 +118,53 @@ onUnmounted(() => {
     </header>
 
     <div
-      ref="stage"
-      class="about__stage"
+      ref="scroller"
+      class="about__scroller"
     >
       <div
-        ref="frame"
-        class="about__frame"
+        ref="stage"
+        class="about__stage"
       >
-        <img
-          ref="image"
-          class="about__image"
-          :src="media.about"
-          alt="方块世界里的原野、远山与建筑"
-          loading="lazy"
-          decoding="async"
+        <div
+          ref="frame"
+          class="about__frame"
         >
-        <span
-          class="about__veil"
-          aria-hidden="true"
-        />
-      </div>
-
-      <div
-        ref="bar"
-        class="about__bar"
-        aria-hidden="true"
-      >
-        <span class="about__progress">
+          <img
+            ref="image"
+            class="about__image"
+            :src="media.about"
+            alt="方块世界里的原野、远山与建筑"
+            loading="lazy"
+            decoding="async"
+          >
           <span
-            ref="progress"
-            class="about__progress-fill"
+            class="about__veil"
+            aria-hidden="true"
           />
-        </span>
-        <span
-          ref="hint"
-          class="about__hint"
+        </div>
+
+        <div
+          ref="bar"
+          class="about__bar"
+          aria-hidden="true"
         >
-          继续向下
-          <Icon
-            name="arrow-down"
-            :size="13"
-          />
-        </span>
+          <span class="about__progress">
+            <span
+              ref="progress"
+              class="about__progress-fill"
+            />
+          </span>
+          <span
+            ref="hint"
+            class="about__hint"
+          >
+            继续向下
+            <Icon
+              name="arrow-down"
+              :size="13"
+            />
+          </span>
+        </div>
       </div>
     </div>
   </section>
@@ -200,8 +207,21 @@ onUnmounted(() => {
   letter-spacing: 0.26em;
 }
 
-.about__stage {
+/* 桌面下由这里预留「钉住 + 展开」的滚动距离（100svh 画面 + 150svh 滚动），
+   高度在首次绘制前就确定，避免 JS 插入 spacer 造成整页位移。 */
+.about__scroller {
   position: relative;
+}
+
+@media (min-width: 900px) {
+  .about__scroller {
+    height: 250svh;
+  }
+}
+
+.about__stage {
+  position: sticky;
+  top: 0;
   width: 100%;
   height: 100svh;
   min-height: 520px;
@@ -280,7 +300,13 @@ onUnmounted(() => {
 
 /* 移动端与 reduced-motion：静态大图，不做钉住展开。 */
 @media (max-width: 899px) {
+  .about__scroller {
+    height: auto;
+  }
+
   .about__stage {
+    position: relative;
+    top: auto;
     height: auto;
     min-height: 0;
     width: min(1080px, calc(100% - 2 * var(--page-pad)));
@@ -301,7 +327,13 @@ onUnmounted(() => {
   .about__bar { display: none; }
 }
 
+.about.is-reduced .about__scroller {
+  height: auto;
+}
+
 .about.is-reduced .about__stage {
+  position: relative;
+  top: auto;
   height: auto;
   min-height: 0;
   width: min(1080px, calc(100% - 2 * var(--page-pad)));
