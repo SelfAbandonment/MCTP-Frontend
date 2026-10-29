@@ -135,7 +135,7 @@ async function boot() {
   scene.environmentIntensity = 0.85
 
   camera = new THREE.PerspectiveCamera(30, 1, 0.01, 60)
-  camera.position.set(0.45, 2.05, 6.05)
+  camera.position.set(0.45, 1.9, 5.35)
   camera.lookAt(0, 0, 0)
 
   const textureLoader = new THREE.TextureLoader()
