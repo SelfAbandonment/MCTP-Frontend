@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { allauthApi } from '@/api/allauth'
 import { authApi } from '@/api/auth'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -24,24 +25,63 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('refresh', refresh)
   }
 
-  async function microsoftLogin() {
-    const res = await authApi.microsoftLogin()
-    const url = res.data?.data?.authorize_url
-    if (!url) throw new Error('未获取到授权链接')
-    window.location.href = url
+  // allauth owns the browser session. After password login / signup / social
+  // login we exchange that session for the JWT pair used by the API.
+  async function adoptSession() {
+    const res = await authApi.sessionToken()
+    const data = res.data?.data || {}
+    setTokens(data.access, data.refresh)
+    user.value = data.user || null
+    sessionError.value = ''
+    return user.value
   }
 
-  async function consumeMicrosoftCallback({ access, refresh }) {
-    setTokens(access, refresh)
+  async function login(username, password) {
+    await loginWithSessionConflictRetry(() => allauthApi.login({ username, password }))
     try {
-      await fetchMe()
+      await adoptSession()
     } catch (error) {
-      logout()
+      clearLocalSession()
       throw error
     }
   }
 
-  function logout() {
+  async function register(username, email, password) {
+    await loginWithSessionConflictRetry(() => allauthApi.signup({ username, email, password }))
+    try {
+      await adoptSession()
+    } catch (error) {
+      error.registrationSucceeded = true
+      throw error
+    }
+  }
+
+  // allauth rejects /auth/login with 409 when this browser already has an
+  // authenticated session (for example, a Django admin session). Sign that
+  // stale session out and retry once with the credentials the user entered.
+  async function loginWithSessionConflictRetry(request) {
+    try {
+      return await request()
+    } catch (error) {
+      if (error?.status !== 409) throw error
+      await allauthApi.logout().catch(() => {})
+      return request()
+    }
+  }
+
+  async function microsoftLogin() {
+    await allauthApi.redirectToProvider('microsoft', 'login')
+  }
+
+  async function microsoftConnect() {
+    await allauthApi.redirectToProvider('microsoft', 'connect')
+  }
+
+  async function consumeMicrosoftCallback() {
+    await adoptSession()
+  }
+
+  function clearLocalSession() {
     generation++
     accessToken.value = null
     refreshToken.value = null
@@ -53,27 +93,11 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('refresh')
   }
 
-  async function login(username, password) {
-    const res = await authApi.login({ username, password })
-    setTokens(res.data.access, res.data.refresh)
-    try {
-      await fetchMe()
-    } catch (error) {
-      logout()
-      throw error
-    }
-  }
-
-  async function register(username, email, password, passwordConfirm) {
-    const res = await authApi.register({ username, email, password, password_confirm: passwordConfirm })
-    if (res.status === 201) {
-      try {
-        await login(username, password)
-      } catch (error) {
-        error.registrationSucceeded = true
-        throw error
-      }
-    }
+  function logout() {
+    // Clear local state synchronously (generation bump invalidates late
+    // responses); best-effort revoke the allauth session in the background.
+    clearLocalSession()
+    allauthApi.logout().catch(() => {})
   }
 
   function refresh() {
@@ -113,5 +137,21 @@ export const useAuthStore = defineStore('auth', () => {
     return sessionRequest
   }
 
-  return { accessToken, refreshToken, user, sessionError, isLoggedIn, isStaff, login, register, logout, refresh, fetchMe, ensureSession, microsoftLogin, consumeMicrosoftCallback }
+  return {
+    accessToken,
+    refreshToken,
+    user,
+    sessionError,
+    isLoggedIn,
+    isStaff,
+    login,
+    register,
+    logout,
+    refresh,
+    fetchMe,
+    ensureSession,
+    microsoftLogin,
+    microsoftConnect,
+    consumeMicrosoftCallback,
+  }
 })

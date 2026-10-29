@@ -128,6 +128,7 @@ onUnmounted(() => {
           class="about__image"
           :src="media.about"
           alt="方块世界里的原野、远山与建筑"
+          loading="lazy"
           decoding="async"
         >
         <span
