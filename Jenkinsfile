@@ -46,14 +46,40 @@ pipeline {
         }
 
         stage('Lighthouse 性能检测') {
-            agent {
-                docker {
-                    image 'kanti/lighthouse-ci'
-                    reuseNode true
-                }
-            }
             steps {
-                sh 'lhci autorun --config=./lighthouserc.cjs'
+                // 注意：Docker Hub 上的 kanti/lighthouse-ci 并不是 GoogleChrome/lighthouse-ci
+                // （那是 2019 年另一个同名项目，CLI 叫 lighthouse-ci），镜像里没有 lhci 命令。
+                // 这里用 docker/lighthouse-ci.Dockerfile 自建镜像（Chromium + @lhci/cli），
+                // 首次构建约 1-2 分钟，之后命中层缓存。
+                sh '''
+                    set -e
+                    IMAGE=mctp/lighthouse-ci:0.15.1
+
+                    if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
+                        echo "[lighthouse] 构建镜像 $IMAGE"
+                        docker build -t "$IMAGE" -f docker/lighthouse-ci.Dockerfile docker/
+                    fi
+
+                    # Jenkins 自身跑在容器里时，$WORKSPACE 只存在于该容器的卷里，
+                    # 直接 -v 会挂到宿主机上不存在的路径，因此优先用 --volumes-from。
+                    CID="$(hostname)"
+                    if ! docker inspect "$CID" >/dev/null 2>&1; then
+                        CID="$(grep -oE '[0-9a-f]{64}' /proc/self/cgroup 2>/dev/null | head -1 || true)"
+                    fi
+
+                    if [ -n "$CID" ] && docker inspect "$CID" >/dev/null 2>&1; then
+                        MOUNT_ARGS="--volumes-from $CID"
+                    else
+                        MOUNT_ARGS="-v $WORKSPACE:$WORKSPACE"
+                    fi
+
+                    docker run --rm $MOUNT_ARGS \
+                        -e HOME=/tmp \
+                        -e CHROME_PATH=/usr/bin/chromium \
+                        -w "$WORKSPACE" \
+                        "$IMAGE" \
+                        lhci autorun --config=./lighthouserc.cjs
+                '''
             }
         }
     }
