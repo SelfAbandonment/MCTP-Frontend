@@ -44,6 +44,11 @@ const routes = [
     meta: { title: '公告 · MCTP' },
   },
   {
+    path: '/announcements/:id(\\d+)',
+    component: () => import('@/views/AnnouncementDetailView.vue'),
+    meta: { title: '公告详情 · MCTP' },
+  },
+  {
     path: '/session-unavailable',
     component: () => import('@/views/RouteStatusView.vue'),
     props: { mode: 'session' },

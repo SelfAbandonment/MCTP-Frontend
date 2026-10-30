@@ -9,9 +9,10 @@ globalThis.localStorage = {
   setItem: (key, value) => storage.set(key, String(value)),
   removeItem: (key) => storage.delete(key),
 }
-const server = await createServer({ server: { middlewareMode: true }, appType: 'custom' })
+const server = await createServer({ server: { middlewareMode: true, hmr: false }, appType: 'custom' })
 const { useAuthStore } = await server.ssrLoadModule('/src/stores/auth.js')
 const { default: api } = await server.ssrLoadModule('/src/api/axios.js')
+const { authApi } = await server.ssrLoadModule('/src/api/auth.js')
 after(() => server.close())
 
 beforeEach(() => {
@@ -132,4 +133,58 @@ test('late profile and refresh responses cannot resurrect a logged-out session',
   resolveRequest({ access: 'late', refresh: 'late-refresh' })
   await assert.rejects(refresh, /会话已退出/)
   assert.equal(auth.accessToken, null)
+})
+
+test('a logout during the session exchange cannot resurrect tokens', async () => {
+  const auth = useAuthStore()
+  const originalSessionToken = authApi.sessionToken
+  // Bypass the allauth config/CSRF handshake: this test is about the store's
+  // generation guard, not about cookie plumbing.
+  authApi.sessionToken = () => api.post('/api/v1/auth/token/session/')
+  let releaseExchange
+  let adapterReached
+  const inFlight = new Promise((resolve) => { adapterReached = resolve })
+  api.defaults.adapter = (config) => new Promise((resolve) => {
+    releaseExchange = () => resolve(respond(config, {
+      code: 200,
+      message: 'session exchanged',
+      data: { access: 'late-access', refresh: 'late-refresh', user: { id: 1 } },
+    }))
+    adapterReached()
+  })
+  try {
+    const pending = auth.consumeMicrosoftCallback()
+    // Attach the rejection handler before the logout so the temporary rejection
+    // is never reported as unhandled.
+    const settled = pending.then(() => null, (error) => error)
+    await Promise.race([
+      inFlight,
+      settled.then((error) => {
+        throw new Error(`session exchange failed before reaching the adapter: ${error?.message}`)
+      }),
+    ])
+    auth.logout()
+    releaseExchange()
+    const error = await settled
+    assert.ok(error, 'the exchange must fail after logout')
+    assert.match(error.message, /重新登录|会话已退出/)
+    assert.equal(auth.accessToken, null)
+    assert.equal(storage.has('access'), false)
+    assert.equal(storage.has('refresh'), false)
+  } finally {
+    authApi.sessionToken = originalSessionToken
+  }
+})
+
+test('the session exchange is never retried with a stale bearer token', async () => {
+  const auth = useAuthStore()
+  auth.refreshToken = 'stale-refresh'
+  const calls = []
+  api.defaults.adapter = async (config) => {
+    calls.push(config.url)
+    throw Object.assign(new Error('Unauthorized'), { config, response: { status: 401 } })
+  }
+  await assert.rejects(api.post('/api/v1/auth/token/session/'))
+  assert.deepEqual(calls, ['/api/v1/auth/token/session/'])
+  assert.equal(auth.refreshToken, 'stale-refresh')
 })

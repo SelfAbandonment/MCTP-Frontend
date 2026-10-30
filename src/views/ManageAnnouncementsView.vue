@@ -4,9 +4,11 @@ import { communityApi } from '@/api/community'
 import ManagementHeading from '@/components/ManagementHeading.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
 import { usePagedResource } from '@/composables/usePagedResource'
+import { announcementStatus } from '@/utils/announcements'
 import { errorMessage, fieldErrors, formatDate } from '@/utils/errors'
 
 const { items, page, count, hasNext, hasPrevious, loading, error, load, retry } = usePagedResource(communityApi.manageAnnouncements)
+const search = ref('')
 const selectedId = ref(null)
 const form = ref(emptyForm())
 const errors = ref({})
@@ -17,6 +19,19 @@ const confirmingDelete = ref(false)
 
 function emptyForm() {
   return { title: '', summary: '', body: '', is_published: false, published_at: '' }
+}
+
+function find() {
+  const term = search.value.trim()
+  select()
+  load(1, term ? { search: term } : {})
+}
+
+function clearSearch() {
+  if (!search.value) return
+  search.value = ''
+  select()
+  load(1, {})
 }
 
 function select(item = null) {
@@ -97,6 +112,37 @@ onMounted(() => load())
           新建公告 +
         </button>
       </div>
+      <form
+        class="search-form"
+        role="search"
+        @submit.prevent="find"
+      >
+        <input
+          v-model="search"
+          class="form-input"
+          type="search"
+          maxlength="80"
+          aria-label="搜索公告"
+          placeholder="按标题、摘要或正文搜索"
+          :disabled="saving"
+        >
+        <button
+          class="btn-primary"
+          type="submit"
+          :disabled="saving || loading"
+        >
+          搜索
+        </button>
+        <button
+          v-if="search"
+          class="text-button"
+          type="button"
+          :disabled="saving || loading"
+          @click="clearSearch"
+        >
+          清除
+        </button>
+      </form>
       <div
         v-if="error"
         class="alert alert-error"
@@ -121,7 +167,7 @@ onMounted(() => load())
         v-else-if="!items.length"
         class="empty-state"
       >
-        还没有公告。从右侧写下第一条消息。
+        {{ search ? '没有找到匹配的公告。' : '还没有公告。从右侧写下第一条消息。' }}
       </p>
       <button
         v-for="item in items"
@@ -135,8 +181,8 @@ onMounted(() => load())
           <strong>{{ item.title }}</strong>
           <small>{{ formatDate(item.updated_at) }}</small>
         </span>
-        <span :class="['badge', { 'badge-muted': !item.is_published }]">
-          {{ !item.is_published ? '草稿' : item.published_at && new Date(item.published_at) > new Date() ? '定时' : '已发布' }}
+        <span :class="['badge', { 'badge-muted': announcementStatus(item).key !== 'published' }]">
+          {{ announcementStatus(item).label }}
         </span>
       </button>
       <PaginationControls
@@ -285,6 +331,8 @@ onMounted(() => load())
 <style scoped>
 fieldset { border: 0; min-width: 0; }
 form { margin-top: 4px; }
+.search-form { margin-top: 0; }
+.search-form .form-input { flex: 1; }
 section[aria-label='公告列表'] .list-row:first-of-type { border-top: 1px solid var(--line); }
 section[aria-label='公告列表'] .empty-state { margin-top: 4px; }
 .panel-heading h2 {
