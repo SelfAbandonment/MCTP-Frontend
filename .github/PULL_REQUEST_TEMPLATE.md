@@ -1,31 +1,40 @@
-## 变更描述
+## 改了什么
 
-简洁描述此 PR 做了什么改动，以及为什么这样改。
+<!-- 一两句话说明动机和结果，不要写“优化代码”这类空话 -->
 
-Closes #<!-- issue 编号 -->
+Closes #
 
 ## 变更类型
 
-- [ ] Bug fix（非破坏性变更，修复问题）
-- [ ] New feature（非破坏性变更，新增功能）
-- [ ] Breaking change（破坏性变更，可能影响现有功能）
-- [ ] Documentation update（文档更新）
-- [ ] Refactor（重构，不影响功能）
-- [ ] CI/CD（工作流变更）
+- [ ] feat 新功能
+- [ ] fix 修复
+- [ ] refactor 重构
+- [ ] docs 文档
+- [ ] test 测试
+- [ ] chore 构建 / 依赖 / CI
 
-## 测试
+## 影响面
 
-- [ ] 本地 `npm run dev` 运行正常
-- [ ] `npm run build` 构建成功
-- [ ] `npm run lint:check` 无 ESLint 错误
-- [ ] 已手动测试相关功能
+- [ ] 页面或交互（UI）
+- [ ] 接口调用 / 环境变量
+- [ ] 构建产物 / 路由 / 部署
+- [ ] CI 或 Jenkinsfile
+- [ ] 仅文档
 
-## 截图（如适用）
+## 验证证据
 
-| Before | After |
-|--------|-------|
-|        |       |
+<!-- 贴命令输出或截图；没跑就写“未验证”并说明原因，不要空着勾 -->
 
-## 其他备注
+- [ ] `npm run lint:check` 通过
+- [ ] `npm test` 通过
+- [ ] `npm run build` 通过
+- [ ] 页面手工验证（写明页面与操作）
+- [ ] 接口改动已与后端 OpenAPI 对齐
 
-有需要 reviewer 特别关注的地方请在此说明。
+## 回滚方式
+
+<!-- revert 本 PR / 重新部署上一个 tag；涉及环境变量或数据时必须写 -->
+
+## Review 重点
+
+<!-- 希望 reviewer 重点看什么，没有就删掉这一节 -->

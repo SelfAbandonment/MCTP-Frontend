@@ -6,15 +6,24 @@ pipeline {
     }
 
     options {
-        timeout(time: 20, unit: 'MINUTES')
-        disableConcurrentBuilds()
+        timestamps()
+        timeout(time: 25, unit: 'MINUTES')
+        disableConcurrentBuilds(abortPrevious: true)
         buildDiscarder(logRotator(numToKeepStr: '20', artifactNumToKeepStr: '10'))
+    }
+
+    parameters {
+        booleanParam(name: 'SKIP_LIGHTHOUSE', defaultValue: false, description: '跳过 Lighthouse 性能与无障碍检测')
+    }
+
+    environment {
+        NODE_ENV = 'development'
     }
 
     stages {
         stage('安装依赖') {
             steps {
-                sh 'NODE_ENV=development npm ci --no-audit --no-fund'
+                sh 'npm ci --no-audit --no-fund'
             }
         }
 
@@ -46,6 +55,13 @@ pipeline {
         }
 
         stage('Lighthouse 性能检测') {
+            // PR 构建跳过（太慢），develop/main 默认跑；需要时用参数强制跳过
+            when {
+                allOf {
+                    expression { !params.SKIP_LIGHTHOUSE }
+                    not { changeRequest() }
+                }
+            }
             steps {
                 // 注意：Docker Hub 上的 kanti/lighthouse-ci 并不是 GoogleChrome/lighthouse-ci
                 // （那是 2019 年另一个同名项目，CLI 叫 lighthouse-ci），镜像里没有 lhci 命令。
@@ -91,7 +107,7 @@ pipeline {
             archiveArtifacts artifacts: '.lighthouseci/**', allowEmptyArchive: true
         }
         unsuccessful {
-            echo '构建未成功：请检查「代码检查」「依赖安全扫描」「Lighthouse 性能检测」阶段日志。'
+            echo '构建未成功：请检查「代码检查」「依赖安全扫描」「构建项目」「Lighthouse 性能检测」阶段日志。'
         }
     }
 }

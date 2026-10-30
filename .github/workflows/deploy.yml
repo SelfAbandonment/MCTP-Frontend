@@ -5,12 +5,20 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# 部署串行执行，不取消进行中的部署，避免 gh-pages 互相覆盖
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false
+
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -26,10 +34,16 @@ jobs:
         env:
           API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
         run: |
+          if [ -z "$API_BASE_URL" ]; then
+            echo "::error::仓库变量 VITE_API_BASE_URL 未设置。到 Settings → Secrets and variables → Actions → Variables 添加 HTTPS 的后端地址。"
+            exit 1
+          fi
           node --input-type=module -e "
-            const url = new URL(process.env.API_BASE_URL);
+            const raw = process.env.API_BASE_URL;
+            let url;
+            try { url = new URL(raw) } catch { throw new Error('VITE_API_BASE_URL 不是合法 URL：' + raw) }
             if (url.protocol !== 'https:') {
-              throw new Error('Set repository variable VITE_API_BASE_URL to the HTTPS backend URL. GitHub Pages cannot call an HTTP API.');
+              throw new Error('GitHub Pages 走 HTTPS，后端也必须是 HTTPS：' + raw);
             }
           "
 

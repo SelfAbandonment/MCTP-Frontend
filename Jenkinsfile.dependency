@@ -1,0 +1,49 @@
+// 依赖巡检专用流水线：只做审计与清单，不跑构建和 Lighthouse。
+// 在 Jenkins 里用一个独立任务指向本文件（Script Path = Jenkinsfile.dependency），
+// 不要占用主 CI 任务的 Script Path。
+pipeline {
+    agent any
+
+    tools {
+        nodejs 'Nodejs24'
+    }
+
+    options {
+        timestamps()
+        timeout(time: 15, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '20', artifactNumToKeepStr: '5'))
+    }
+
+    stages {
+        stage('安装依赖') {
+            steps {
+                sh 'npm ci --no-audit --no-fund'
+            }
+        }
+
+        stage('安全审计') {
+            steps {
+                // 巡检任务只出报告，不因告警失败；主 CI 才是门禁
+                sh 'npm audit --audit-level=moderate || true'
+            }
+        }
+
+        stage('过期依赖') {
+            steps {
+                sh 'npm outdated || true'
+            }
+        }
+
+        stage('依赖树') {
+            steps {
+                sh 'npm ls --all > dependency-tree.txt 2>&1 || true'
+            }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'dependency-tree.txt', allowEmptyArchive: true
+        }
+    }
+}
