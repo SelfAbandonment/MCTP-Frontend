@@ -23,9 +23,14 @@ api.interceptors.response.use(
     const auth = useAuthStore()
     const originalRequest = err.config || {}
     if (originalRequest.skipAuth) return Promise.reject(err)
-    const isRefreshRequest = originalRequest.url?.includes('/api/v1/auth/token/refresh/')
+    const url = originalRequest.url || ''
+    const isRefreshRequest = url.includes('/api/v1/auth/token/refresh/')
+    // The session bridge only accepts a Django session cookie. Retrying it with
+    // a stale Bearer token would mask the real (CSRF/session) failure.
+    const isSessionExchange = url.includes('/api/v1/auth/token/session/')
+    const isCredentialRequest = isRefreshRequest || isSessionExchange
 
-    if (err.response?.status === 401 && auth.refreshToken && !originalRequest._retry && !isRefreshRequest) {
+    if (err.response?.status === 401 && auth.refreshToken && !originalRequest._retry && !isCredentialRequest) {
       try {
         originalRequest._retry = true
         await auth.refresh()
@@ -37,7 +42,7 @@ api.interceptors.response.use(
         return Promise.reject(refreshError)
       }
     }
-    if (err.response?.status === 401 && !isRefreshRequest && !originalRequest.url?.includes('/api/v1/auth/token/')) {
+    if (err.response?.status === 401 && !isCredentialRequest && !url.includes('/api/v1/auth/token/')) {
       auth.logout()
     }
     return Promise.reject(err)
