@@ -12,10 +12,17 @@
 
 ## 分支规则
 
-- `develop`：开发分支，所有功能分支合入这里。
-- `main`：生产分支，只接收 `develop` 的 release PR。
-- 禁止直接向 `main` 推送功能代码。
-- 新任务从 `develop` 拉分支：`feat/<name>`、`fix/<name>`、`chore/<name>`。
+- `main`：生产分支，只接收 `develop` 的 release PR 与 hotfix 回流，每次合并打 tag。
+- `develop`：集成分支，功能分支都合入这里；**禁止直接推送**。
+- 新任务从 `develop` 拉分支：`feat/<name>`、`fix/<name>`、`docs/<name>`、`chore/<name>`。
+- 合并统一 Squash；规则真源见 `docs/协作规范.md`。
+
+## CI 与 Jenkins
+
+- GitHub Actions：`ci.yml`（PR 跑 lint + test + build）、`deploy.yml`（push `main` 部署 Pages）。
+- Jenkins：`Jenkinsfile`（仓库根）对应多分支任务，develop/main/PR 都跑，结果回写 commit status。
+- 本地等价命令：`npm run lint:check`、`npm test`、`npm run build`。
+- Node 版本以 22 为准（Vite 8 要求 `^20.19.0 || >=22.12.0`，`engines` 已同步）。
 
 ## 隐私与安全
 

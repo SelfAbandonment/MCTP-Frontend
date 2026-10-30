@@ -4,6 +4,9 @@ node_modules/
 # Build output
 dist/
 
+# Lighthouse CI 报告
+.lighthouseci/
+
 # Environment files
 .env
 .env.local
