@@ -1,0 +1,11 @@
+* @SelfAbandonment
+
+/.github/ @SelfAbandonment
+/src/ @SelfAbandonment
+/tests/ @SelfAbandonment
+/scripts/ @SelfAbandonment
+/public/ @SelfAbandonment
+/Jenkinsfile @SelfAbandonment
+/package.json @SelfAbandonment
+/package-lock.json @SelfAbandonment
+/vite.config.js @SelfAbandonment
