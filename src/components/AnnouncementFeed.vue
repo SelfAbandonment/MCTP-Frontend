@@ -1,12 +1,29 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { communityApi } from '@/api/community'
 import { usePagedResource } from '@/composables/usePagedResource'
 import { formatDate } from '@/utils/errors'
 import PaginationControls from '@/components/PaginationControls.vue'
 
-defineProps({ compact: { type: Boolean, default: false } })
+defineProps({
+  compact: { type: Boolean, default: false },
+  searchable: { type: Boolean, default: false },
+})
+
+const search = ref('')
 const { items, page, count, hasNext, hasPrevious, loading, error, load, retry } = usePagedResource(communityApi.announcements)
+
+function applySearch() {
+  const term = search.value.trim()
+  load(1, term ? { search: term } : {})
+}
+
+function clearSearch() {
+  if (!search.value) return
+  search.value = ''
+  load(1, {})
+}
+
 onMounted(() => load())
 </script>
 
@@ -15,6 +32,37 @@ onMounted(() => load())
     class="announcement-feed"
     :aria-busy="loading"
   >
+    <form
+      v-if="searchable"
+      class="feed-search"
+      role="search"
+      @submit.prevent="applySearch"
+    >
+      <input
+        v-model="search"
+        class="form-input"
+        type="search"
+        maxlength="80"
+        aria-label="搜索公告"
+        placeholder="按标题、摘要或正文搜索"
+      >
+      <button
+        class="btn-primary"
+        type="submit"
+        :disabled="loading"
+      >
+        搜索
+      </button>
+      <button
+        v-if="search"
+        class="text-button"
+        type="button"
+        :disabled="loading"
+        @click="clearSearch"
+      >
+        清除
+      </button>
+    </form>
     <p
       v-if="loading"
       class="feed-message"
@@ -35,12 +83,11 @@ onMounted(() => load())
         重试
       </button>
     </div>
-    <p
-      v-else-if="!items.length"
-      class="feed-message"
-    >
-      这里暂时安静，新的社区消息会出现在这里。
-    </p>
+    <template v-else-if="!items.length">
+      <p class="feed-message">
+        {{ search ? '没有找到匹配的公告。' : '这里暂时安静，新的社区消息会出现在这里。' }}
+      </p>
+    </template>
     <template v-else>
       <details
         v-for="(item, index) in compact ? items.slice(0, 3) : items"
@@ -59,8 +106,16 @@ onMounted(() => load())
             aria-hidden="true"
           >+</span>
         </summary>
-        <div class="prose announcement-body">
-          {{ item.body }}
+        <div class="announcement-detail">
+          <div class="prose announcement-body">
+            {{ item.body }}
+          </div>
+          <RouterLink
+            class="announcement-permalink"
+            :to="`/announcements/${item.id}`"
+          >
+            单独打开这一页 ↗
+          </RouterLink>
         </div>
       </details>
       <PaginationControls
@@ -77,6 +132,17 @@ onMounted(() => load())
 </template>
 
 <style scoped>
+.feed-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.feed-search .form-input { flex: 1; min-width: 0; }
+
 .feed-message { padding: 28px 0; font-size: 12px; color: var(--text-soft); }
 .announcement-entry { border-bottom: 1px solid var(--line); }
 .announcement-entry summary {
@@ -126,11 +192,23 @@ onMounted(() => load())
 }
 .announcement-entry summary:hover .entry-plus { color: var(--brand); }
 details[open] .entry-plus { transform: rotate(45deg); }
-.announcement-body { padding: 0 30px 30px 48px; color: var(--text-soft); }
+.announcement-detail { padding: 0 30px 26px 48px; }
+.announcement-body { color: var(--text-soft); }
+.announcement-permalink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--brand);
+}
+.announcement-permalink:hover { text-decoration: underline; }
 summary:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
 @media (max-width: 700px) {
+  .feed-search { flex-wrap: wrap; }
+  .feed-search .form-input { flex-basis: 100%; }
   .announcement-entry summary { gap: 14px; padding: 20px 8px; }
-  .announcement-body { padding: 0 12px 24px; }
+  .announcement-detail { padding: 0 12px 24px; }
   .entry-plus { font-size: 22px; }
 }
 </style>

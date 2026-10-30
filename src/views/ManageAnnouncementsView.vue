@@ -4,6 +4,7 @@ import { communityApi } from '@/api/community'
 import ManagementHeading from '@/components/ManagementHeading.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
 import { usePagedResource } from '@/composables/usePagedResource'
+import { announcementStatus } from '@/utils/announcements'
 import { errorMessage, fieldErrors, formatDate } from '@/utils/errors'
 
 const { items, page, count, hasNext, hasPrevious, loading, error, load, retry } = usePagedResource(communityApi.manageAnnouncements)
@@ -135,8 +136,8 @@ onMounted(() => load())
           <strong>{{ item.title }}</strong>
           <small>{{ formatDate(item.updated_at) }}</small>
         </span>
-        <span :class="['badge', { 'badge-muted': !item.is_published }]">
-          {{ !item.is_published ? '草稿' : item.published_at && new Date(item.published_at) > new Date() ? '定时' : '已发布' }}
+        <span :class="['badge', { 'badge-muted': announcementStatus(item).key !== 'published' }]">
+          {{ announcementStatus(item).label }}
         </span>
       </button>
       <PaginationControls
