@@ -18,10 +18,6 @@ pipeline {
 
     environment {
         NODE_ENV = 'development'
-        GITHUB_ACCOUNT = 'SelfAbandonment'
-        GITHUB_REPO = 'MCTP-Frontend'
-        GITHUB_CREDENTIALS = 'github-MCTP'
-        STATUS_CONTEXT = 'jenkins/mctp-fe'
     }
 
     stages {
@@ -109,35 +105,9 @@ pipeline {
             archiveArtifacts artifacts: 'dist/**', allowEmptyArchive: true
             // Lighthouse 的 JSON/HTML 报告，便于回溯评分明细
             archiveArtifacts artifacts: '.lighthouseci/**', allowEmptyArchive: true
-            script {
-                notifyGitHub(currentBuild.currentResult)
-            }
         }
         unsuccessful {
             echo '构建未成功：请检查「代码检查」「依赖安全扫描」「构建项目」「Lighthouse 性能检测」阶段日志。'
         }
-    }
-}
-
-/**
- * 把构建结果回写到 GitHub commit status，让 PR 能 require 这个检查。
- * 插件缺失或凭证不对时只打日志，不影响流水线结果。
- */
-def notifyGitHub(String result) {
-    if (!env.GIT_COMMIT) {
-        echo '没有 GIT_COMMIT（可能不是 SCM 触发），跳过 GitHub 状态回写'
-        return
-    }
-    def state = result == 'SUCCESS' ? 'SUCCESS' : (result == 'ABORTED' ? 'ERROR' : 'FAILURE')
-    try {
-        githubNotify account: env.GITHUB_ACCOUNT,
-            credentialsId: env.GITHUB_CREDENTIALS,
-            repo: env.GITHUB_REPO,
-            sha: env.GIT_COMMIT,
-            context: env.STATUS_CONTEXT,
-            description: "Jenkins #${env.BUILD_NUMBER} ${result}",
-            status: state
-    } catch (Exception e) {
-        echo "GitHub 状态回写失败（忽略）：${e.message}"
     }
 }

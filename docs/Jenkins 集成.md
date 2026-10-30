@@ -32,9 +32,9 @@ GitHub 仓库 → Settings → Webhooks → Add webhook：
 
 ## 状态回写
 
-`Jenkinsfile` 的 post 阶段调用 `githubNotify`，context 为 `jenkins/mctp-fe`，使用凭证 `github-MCTP`（该 token 需要 `repo:status` 权限）。
+GitHub Branch Source 会为每个分支和 PR 自动回写两个 status：`continuous-integration/jenkins/branch` 和 `continuous-integration/jenkins/pr-merge`，不需要额外配置。
 
-打通后，在分支保护的必需检查里加 `jenkins/mctp-fe`；没打通时流水线只打日志、不失败。
+注意：这个版本的 `github` 插件没有 `githubNotify` 步骤，脚本里调用会直接报 `NoSuchMethodError`，所以流水线不再自己回写状态，依赖上面的自动 status。
 
 ## 参数
 
