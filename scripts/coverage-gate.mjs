@@ -26,7 +26,9 @@ if (import.meta.url === entry) {
   const threshold = Number(process.argv[3] ?? '70')
   let text = ''
   try {
-    text = fs.readFileSync(file, 'utf8')
+    const raw = fs.readFileSync(file)
+    // Windows PowerShell 的 `>` 会写 UTF-16LE；CI 的 bash 是 UTF-8，两种都兼容
+    text = raw[0] === 0xff && raw[1] === 0xfe ? raw.toString('utf16le') : raw.toString('utf8')
   } catch {
     console.error(`覆盖率门禁失败：读取不到 ${file}`)
     process.exit(1)

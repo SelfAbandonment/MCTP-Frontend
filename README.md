@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/Vite-8.x-646CFF?logo=vite&logoColor=white" alt="Vite" />
   <img src="https://img.shields.io/badge/GSAP-3.x-88CE02" alt="GSAP" />
   <img src="https://img.shields.io/github/actions/workflow/status/SelfAbandonment/MCTP-Frontend/deploy.yml?label=deploy&logo=github" alt="Deploy Status" />
-  <img src="https://img.shields.io/github/actions/workflow/status/SelfAbandonment/MCTP-Frontend/lint.yml?label=lint&logo=github" alt="Lint Status" />
+  <img src="https://img.shields.io/github/actions/workflow/status/SelfAbandonment/MCTP-Frontend/ci.yml?label=ci&logo=github" alt="CI Status" />
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="License" />
 </p>
 

@@ -14,6 +14,23 @@ permissions:
   contents: read
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint:check
+
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -33,9 +50,10 @@ jobs:
 
       - name: Unit tests (JUnit + coverage gate)
         run: |
-          npm test -- --test-reporter=junit --test-reporter-destination=junit.xml
+          node --test --experimental-test-coverage \
+            --test-reporter=spec --test-reporter-destination=stdout \
+            --test-reporter=junit --test-reporter-destination=junit.xml > coverage.txt 2>&1
           node scripts/junit-normalize.mjs junit.xml
-          node --test --experimental-test-coverage > coverage.txt 2>&1
           node scripts/coverage-gate.mjs coverage.txt 70
 
       - name: Upload test reports

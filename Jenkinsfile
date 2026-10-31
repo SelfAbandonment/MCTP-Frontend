@@ -51,12 +51,13 @@ pipeline {
                         ).trim()
                         def list = files ? files.split('\n') : []
                         def relevant = list.any {
-                            it ==~ /^(src|public|scripts|docker)\/.*|^package(-lock)?\.json$|^vite\.config\.js$|^index\.html$/
+                            it ==~ /^(src|public|scripts|docker)\/.*|^package(-lock)?\.json$|^vite\.config\.js$|^lighthouserc\.cjs$|^index\.html$/
                         }
                         env.RUN_LIGHTHOUSE = relevant ? 'true' : 'false'
                         echo "前端相关变更：${relevant}（共 ${list.size()} 个文件）"
                     } else {
-                        env.RUN_LIGHTHOUSE = 'true'
+                        // 分支构建只在 develop/main 默认跑；功能分支需要 FORCE_LIGHTHOUSE
+                        env.RUN_LIGHTHOUSE = (env.BRANCH_NAME == 'develop' || env.BRANCH_NAME == 'main') ? 'true' : 'false'
                     }
                 }
             }

@@ -7,6 +7,11 @@ on:
   schedule:
     - cron: '0 3 * * 1'
   workflow_dispatch:
+    inputs:
+      force_compact:
+        description: 强制压缩 gh-pages 历史（用于验证/应急）
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -91,10 +96,11 @@ jobs:
         working-directory: pages
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FORCE_COMPACT: ${{ github.event.inputs.force_compact }}
         run: |
           set -e
-          if [ "$(date +%-d)" -gt 7 ]; then
-            echo "非月初，跳过历史压缩"
+          if [ "${FORCE_COMPACT}" != "true" ] && [ "$(date +%-d)" -gt 7 ]; then
+            echo "非月初且未强制，跳过历史压缩"
             exit 0
           fi
           git checkout --orphan "compact-$(date +%Y%m%d)"
