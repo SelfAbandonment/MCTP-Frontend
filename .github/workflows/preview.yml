@@ -3,6 +3,10 @@ name: PR Preview
 on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
+    # 文档型 PR 不需要部署预览；关闭事件由每周兜底清理兜住
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   # 兜底：清理已关闭但未被 closed 事件清理的预览目录
   schedule:
     - cron: '0 3 * * 1'
