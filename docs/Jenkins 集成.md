@@ -75,6 +75,16 @@ GitHub Branch Source 会为每个分支和 PR 自动回写两个 status：`conti
 - Issue 用 HTML 标记区分前端/后端，重复巡检只更新同一条；失败不影响巡检构建结果
 - 依赖 PR 评论与巡检 Issue 都使用 Jenkins 凭证 `github-MCTP`（需要 Issues 写权限），PR 评论只在 `CHANGE_ID` 存在时执行，所以协作者在仓库内分支提的 PR 同样会收到汇总
 
+## AstrBot 构建通知
+
+- 需要三个 Jenkins **Secret text** 凭证（Global）：
+  - `astrbot-base-url`：`http://<AstrBot-IP>:6185`
+  - `astrbot-api-key`：AstrBot OpenAPI Key，scope 含 `plugin`
+  - `astrbot-webhook-token`：插件配置里的 `webhook_token`
+- 触发：`failure`、`fixed`（上次失败本次恢复）、`unstable`（Lighthouse strict 警告）；凭证缺失或网络失败只写日志，不影响构建
+- 插件源码在 workspace 的 `astrbot-plugins/astrbot_plugin_mctp_ci/`（不在本仓库），采用 `dashboard` 模式，复用 6185 的插件路由
+- 通知内容：仓库、分支/PR、构建号、耗时、链接，渲染为图片卡片；图片发送失败自动回退纯文本
+
 ## 磁盘治理
 
 - 多分支孤儿策略：`pruneDeadBranches=true`、`daysToKeep=0`、`numToKeep=0`，已关闭 PR / 已删除分支的任务在下次扫描时立即删除
