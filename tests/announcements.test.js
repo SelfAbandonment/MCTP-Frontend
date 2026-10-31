@@ -1,6 +1,12 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { announcementStatus, isVisibleNow } from '../src/utils/announcements.js'
+import {
+  ANNOUNCEMENT_CATEGORIES,
+  announcementCategory,
+  announcementQuery,
+  announcementStatus,
+  isVisibleNow,
+} from '../src/utils/announcements.js'
 
 const NOW = Date.parse('2026-10-30T12:00:00Z')
 
@@ -30,4 +36,34 @@ test('legacy published records without a timestamp stay visible', () => {
 test('missing items are treated as drafts instead of throwing', () => {
   assert.equal(announcementStatus(null, NOW).key, 'draft')
   assert.equal(announcementStatus(undefined, NOW).label, '草稿')
+})
+
+test('category codes mirror the backend choices and labels', () => {
+  assert.deepEqual(
+    ANNOUNCEMENT_CATEGORIES.map((category) => category.key),
+    ['notice', 'event', 'update', 'maintenance'],
+  )
+  assert.equal(announcementCategory({ category: 'event' }).label, '活动')
+  assert.equal(announcementCategory({ category: 'maintenance' }).key, 'maintenance')
+})
+
+test('unknown categories keep their raw code instead of pretending to be notice', () => {
+  assert.deepEqual(announcementCategory({ category: 'pinned' }), { key: 'pinned', label: 'pinned' })
+})
+
+test('missing categories fall back to the backend default', () => {
+  for (const item of [null, undefined, {}, { category: null }]) {
+    assert.deepEqual(announcementCategory(item), { key: 'notice', label: '公告' })
+  }
+})
+
+test('query builder trims search and drops blank filters', () => {
+  assert.deepEqual(announcementQuery(), {})
+  assert.deepEqual(announcementQuery({ search: '  开服  ' }), { search: '开服' })
+  assert.deepEqual(announcementQuery({ search: '  ', category: '', status: '' }), {})
+  assert.deepEqual(announcementQuery({ search: '活动', category: 'event', status: 'published' }), {
+    search: '活动',
+    category: 'event',
+    status: 'published',
+  })
 })
