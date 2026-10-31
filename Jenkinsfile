@@ -39,6 +39,29 @@ pipeline {
             }
         }
 
+        stage('变更检测') {
+            steps {
+                script {
+                    if (env.CHANGE_ID) {
+                        def target = env.CHANGE_TARGET ?: 'develop'
+                        sh "git fetch --no-tags origin +refs/heads/${target}:refs/remotes/origin/${target}"
+                        def files = sh(
+                            script: "git diff --name-only origin/${target}...HEAD",
+                            returnStdout: true
+                        ).trim()
+                        def list = files ? files.split('\n') : []
+                        def relevant = list.any {
+                            it ==~ /^(src|public|scripts|docker)\/.*|^package(-lock)?\.json$|^vite\.config\.js$|^index\.html$/
+                        }
+                        env.RUN_LIGHTHOUSE = relevant ? 'true' : 'false'
+                        echo "前端相关变更：${relevant}（共 ${list.size()} 个文件）"
+                    } else {
+                        env.RUN_LIGHTHOUSE = 'true'
+                    }
+                }
+            }
+        }
+
         stage('环境信息') {
             steps {
                 sh 'node --version && npm --version'
@@ -63,21 +86,7 @@ pipeline {
                 allOf {
                     expression { !params.SKIP_LIGHTHOUSE }
                     anyOf {
-                        branch 'develop'
-                        branch 'main'
-                        allOf {
-                            changeRequest()
-                            anyOf {
-                                changeset 'src/**'
-                                changeset 'public/**'
-                                changeset 'package.json'
-                                changeset 'package-lock.json'
-                                changeset 'vite.config.js'
-                                changeset 'index.html'
-                                changeset 'scripts/**'
-                                changeset 'docker/**'
-                            }
-                        }
+                        expression { env.RUN_LIGHTHOUSE == 'true' }
                         expression { params.FORCE_LIGHTHOUSE }
                     }
                 }
