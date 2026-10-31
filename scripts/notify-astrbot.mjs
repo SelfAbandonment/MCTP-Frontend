@@ -65,7 +65,7 @@ export async function sendNotification(env = process.env, fetchImpl = fetch) {
       'X-CI-Token': token,
     },
     body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(5000),
+    signal: AbortSignal.timeout(15000),
   })
   const text = (await response.text()).slice(0, 300)
   if (!response.ok) {
