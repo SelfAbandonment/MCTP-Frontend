@@ -1,3 +1,32 @@
+def notifyAstrBot(String status, String title) {
+    try {
+        def elapsed = ((System.currentTimeMillis() - currentBuild.startTimeInMillis) / 1000).toInteger()
+        withCredentials([
+            string(credentialsId: 'astrbot-base-url', variable: 'ASTRBOT_BASE_URL'),
+            string(credentialsId: 'astrbot-api-key', variable: 'ASTRBOT_API_KEY'),
+            string(credentialsId: 'astrbot-webhook-token', variable: 'ASTRBOT_WEBHOOK_TOKEN')
+        ]) {
+            withEnv([
+                "NOTIFY_STATUS=${status}",
+                "NOTIFY_TITLE=${title}",
+                "NOTIFY_REPO=MCTP-FE",
+                "NOTIFY_EVENT=ci",
+                "NOTIFY_BRANCH=${env.CHANGE_BRANCH ?: env.BRANCH_NAME ?: ''}",
+                "NOTIFY_SUBTITLE=${env.CHANGE_ID ? 'PR #' + env.CHANGE_ID : ''}",
+                "NOTIFY_PR=${env.CHANGE_ID ?: ''}",
+                "NOTIFY_URL=${env.BUILD_URL ?: ''}",
+                "NOTIFY_DURATION=${elapsed}s",
+                "NOTIFY_ACTOR=${env.BUILD_USER_ID ?: ''}",
+                "NOTIFY_DETAILS=构建 #${env.BUILD_NUMBER} | ${env.JOB_NAME.replaceAll('%2F', '/')}"
+            ]) {
+                sh 'node scripts/notify-astrbot.mjs || true'
+            }
+        }
+    } catch (Exception exc) {
+        echo "AstrBot 通知跳过（凭证未配置或发送失败）：${exc.message}"
+    }
+}
+
 pipeline {
     agent any
 
@@ -163,12 +192,20 @@ pipeline {
         always {
             archiveArtifacts artifacts: 'dist/index.html,dist/assets/**', allowEmptyArchive: true
             archiveArtifacts artifacts: '.lighthouseci/**', allowEmptyArchive: true
+        }
+        failure {
             script {
-                // PR 工作区用完即清，避免 node_modules/dist 在 2 个执行器的磁盘上堆积
-                // 用 env.CHANGE_ID 判断：changeRequest() 在分支构建里也可能返回真值
-                if (env.CHANGE_ID) {
-                    cleanWs()
-                }
+                notifyAstrBot('failure', "MCTP-FE 构建失败：${env.CHANGE_BRANCH ?: env.BRANCH_NAME ?: ''}")
+            }
+        }
+        fixed {
+            script {
+                notifyAstrBot('fixed', "MCTP-FE 构建恢复：${env.CHANGE_BRANCH ?: env.BRANCH_NAME ?: ''}")
+            }
+        }
+        unstable {
+            script {
+                notifyAstrBot('warning', "MCTP-FE Lighthouse 警告：${env.CHANGE_BRANCH ?: env.BRANCH_NAME ?: ''}")
             }
         }
         success {
@@ -177,6 +214,15 @@ pipeline {
                 if (env.BRANCH_NAME == 'main') {
                     echo 'main 构建通过，触发生产部署 MCTP-Deploy'
                     build job: 'MCTP-Deploy', wait: false, parameters: [string(name: 'BRANCH', value: 'main')]
+                }
+            }
+        }
+        cleanup {
+            script {
+                // 通知需要工作区，清理放到最后
+                // 用 env.CHANGE_ID 判断：changeRequest() 在分支构建里也可能返回真值
+                if (env.CHANGE_ID) {
+                    cleanWs()
                 }
             }
         }
