@@ -5,7 +5,8 @@ import fs from 'node:fs'
 import { pathToFileURL } from 'node:url'
 
 export const MARKER = '<!-- mctp-ci-report -->'
-export const LEGACY_MARKER = '<!-- mctp-lighthouse -->'
+export const LIGHTHOUSE_MARKER = '<!-- mctp-lighthouse -->'
+export const LEGACY_MARKER = LIGHTHOUSE_MARKER
 
 export function parseJunit(xml) {
   const tests = (xml.match(/<testcase\b/g) ?? []).length
@@ -30,6 +31,14 @@ export function buildComment({ lighthouse, tests, coverage, buildUrl }) {
   }
   if (coverage) sections.push(`- **覆盖率**：${coverage}`)
   if (sections.length === 3) sections.push('- 本次构建没有可汇总的报告')
+  if (buildUrl) sections.push('', `[查看 Jenkins 构建](${buildUrl})`)
+  return sections.join('\n')
+}
+
+export function buildLighthouseComment({ lighthouse, buildUrl }) {
+  const sections = [LIGHTHOUSE_MARKER, '### Lighthouse 结果', '']
+  const text = (lighthouse || '').replace(/^Lighthouse\s*[:：]?\s*/, '').trim()
+  sections.push(text || '本次构建没有 Lighthouse 报告')
   if (buildUrl) sections.push('', `[查看 Jenkins 构建](${buildUrl})`)
   return sections.join('\n')
 }
@@ -78,18 +87,19 @@ async function main() {
     console.log('缺少 GH_TOKEN / GH_REPO / PR_NUMBER，跳过 PR 评论')
     return
   }
+  const lighthouseKind = process.env.REPORT_KIND === 'lighthouse'
   const { junit, coverage } = readReports()
-  const body = buildComment({
-    lighthouse: process.env.LH_SUMMARY,
-    tests: junit,
-    coverage,
-    buildUrl: process.env.BUILD_URL,
-  })
+  const body = lighthouseKind
+    ? buildLighthouseComment({ lighthouse: process.env.LH_SUMMARY, buildUrl: process.env.BUILD_URL })
+    : buildComment({
+        lighthouse: process.env.LH_SUMMARY,
+        tests: junit,
+        coverage,
+        buildUrl: process.env.BUILD_URL,
+      })
+  const marker = lighthouseKind ? LIGHTHOUSE_MARKER : MARKER
   const comments = await github(`/repos/${repo}/issues/${pullRequest}/comments?per_page=100`, {}, token)
-  // 兼容早期只发 Lighthouse 的标记，并在迁移后清理重复评论
-  const matches = comments.filter(
-    (comment) => comment.body?.includes(MARKER) || comment.body?.includes(LEGACY_MARKER),
-  )
+  const matches = comments.filter((comment) => comment.body?.includes(marker))
   if (matches.length) {
     const [keep, ...duplicates] = matches
     await github(
@@ -100,7 +110,7 @@ async function main() {
     for (const duplicate of duplicates) {
       await github(`/repos/${repo}/issues/comments/${duplicate.id}`, { method: 'DELETE' }, token)
     }
-    console.log(`已更新 PR #${pullRequest} 的 CI 评论 #${keep.id}（清理 ${duplicates.length} 条重复）`)
+    console.log(`已更新 PR #${pullRequest} 的评论 #${keep.id}（清理 ${duplicates.length} 条重复）`)
     return
   }
   const created = await github(
@@ -108,7 +118,7 @@ async function main() {
     { method: 'POST', body: JSON.stringify({ body }) },
     token,
   )
-  console.log(`已新增 PR #${pullRequest} 的 CI 评论 #${created.id}`)
+  console.log(`已新增 PR #${pullRequest} 的评论 #${created.id}`)
 }
 
 const entry = process.argv[1] ? pathToFileURL(process.argv[1]).href : ''
