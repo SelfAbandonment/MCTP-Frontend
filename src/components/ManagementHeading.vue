@@ -27,6 +27,9 @@ defineProps({ title: { type: String, required: true } })
     <RouterLink to="/manage/players">
       玩家管理
     </RouterLink>
+    <RouterLink to="/manage/points">
+      积分发放
+    </RouterLink>
   </nav>
 </template>
 

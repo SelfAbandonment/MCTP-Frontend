@@ -7,6 +7,7 @@ import MinecraftPanel from '@/components/dashboard/MinecraftPanel.vue'
 import SecurityPanel from '@/components/dashboard/SecurityPanel.vue'
 import ServicePanel from '@/components/dashboard/ServicePanel.vue'
 import CommunityPulsePanel from '@/components/dashboard/CommunityPulsePanel.vue'
+import PointsPanel from '@/components/dashboard/PointsPanel.vue'
 
 const auth = useAuthStore()
 // 场景图回退链：关于图 → 入口图 → 纯 CSS 渐变底，避免素材缺失时出现破图。
@@ -66,6 +67,7 @@ function handleSceneError() {
 
   <div class="player-grid">
     <CommunityPulsePanel />
+    <PointsPanel />
     <AccountPanel />
     <MinecraftPanel />
     <SecurityPanel />
