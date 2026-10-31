@@ -43,14 +43,14 @@ GitHub Branch Source 会为每个分支和 PR 自动回写两个 status：`conti
 |---|---|---|
 | `SKIP_LIGHTHOUSE` | false | 跳过性能/无障碍检测 |
 | `FORCE_LIGHTHOUSE` | false | 在非 PR 的功能分支上强制运行 Lighthouse（PR 与 `develop`/`main` 默认都会跑） |
-| `ALLOW_LIGHTHOUSE_WARNINGS` | false | Lighthouse 有 warning 时不把构建标记为 UNSTABLE |
+| `LIGHTHOUSE_STRICT` | false | Lighthouse 有 warning 时把构建标记为 UNSTABLE（默认只写描述/评论，不阻塞） |
 
 ## 缓存与产物
 
 - Lighthouse 镜像 `mctp/lighthouse-ci:0.15.1` 首次构建 1–2 分钟，之后命中层缓存
 - Lighthouse 在 `develop`/`main`，以及包含 `src/**`、`public/**`、依赖/构建配置变更的 PR 上运行；纯文档 PR 自动跳过
 - 评分与断言摘要写入构建描述；PR 上新增/更新 **Lighthouse 评论**（`<!-- mctp-lighthouse -->`，`scripts/pr-comment.mjs` 的 `REPORT_KIND=lighthouse` 模式）
-- Lighthouse 有 warning 时构建标记为 **UNSTABLE**；`ALLOW_LIGHTHOUSE_WARNINGS=true` 可保持绿色
+- Lighthouse 有 warning 时默认只写构建描述/评论；`LIGHTHOUSE_STRICT=true` 才把构建标记为 **UNSTABLE**
 - 测试/覆盖率与 CI 汇总评论由 GitHub Actions 负责（见下方分工），Jenkins 不再跑 ESLint/单测
 - 产物归档：`dist/index.html`、`dist/assets/**`、`.lighthouseci/**`（不再归档十几 MB 的 `dist/media/**`）
 - 每个分支保留 10 条构建、2 份产物；新构建会中止同分支进行中的旧构建
