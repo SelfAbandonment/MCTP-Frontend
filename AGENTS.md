@@ -7,7 +7,8 @@
 - Vue 3 + Vite 前端 Dashboard。
 - 仓库路径：`/mnt/d/code/MCTP-FE`。
 - GitHub：`github.com/SelfAbandonment/MCTP-Frontend`。
-- 生产前端：GitHub Pages。
+- 生产前端：`MCTP-Deploy`（`main` 构建成功后自动部署）。
+- GitHub Pages：`main` 前端预览（`deploy.yml`），不是生产入口。
 - 当前后端 API：`http://api.mcreatopla.top:21009`。
 
 ## 分支规则
@@ -20,7 +21,7 @@
 ## CI 与 Jenkins
 
 - GitHub Actions：`ci.yml`（PR 跑 lint + test + build）、`deploy.yml`（push `main` 部署 Pages）。
-- Jenkins：`Jenkinsfile`（仓库根）对应多分支任务，develop/main/PR 都跑，结果回写 commit status。
+- Jenkins：`Jenkinsfile`（仓库根）对应多分支任务，develop/main/PR 都跑，结果回写 commit status；Lighthouse 只在 `develop`/`main` 跑（PR 可用 `FORCE_LIGHTHOUSE` 强制），`main` 通过后自动触发 `MCTP-Deploy`。
 - 本地等价命令：`npm run lint:check`、`npm test`、`npm run build`。
 - Node 版本以 22 为准（Vite 8 要求 `^20.19.0 || >=22.12.0`，`engines` 已同步）。
 

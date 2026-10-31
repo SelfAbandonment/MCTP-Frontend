@@ -24,13 +24,14 @@ pipeline {
         stage('安全审计') {
             steps {
                 // 巡检任务只出报告，不因告警失败；主 CI 才是门禁
-                sh 'npm audit --audit-level=moderate || true'
+                sh 'npm audit --audit-level=moderate > npm-audit.txt 2>&1 || true'
+                sh 'npm audit --json > npm-audit.json 2>&1 || true'
             }
         }
 
         stage('过期依赖') {
             steps {
-                sh 'npm outdated || true'
+                sh 'npm outdated > npm-outdated.txt 2>&1 || true'
             }
         }
 
@@ -43,7 +44,7 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: 'dependency-tree.txt', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'dependency-tree.txt,npm-audit.txt,npm-audit.json,npm-outdated.txt', allowEmptyArchive: true
         }
     }
 }

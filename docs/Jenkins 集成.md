@@ -5,7 +5,8 @@
 | 任务 | 类型 | 脚本 | 触发 |
 |---|---|---|---|
 | `MCTP-FE` | Multibranch Pipeline | `Jenkinsfile` | push `develop`/`main`、PR |
-| `MCTP-FE-Dependency` | Pipeline | `Jenkinsfile.dependency` | 每周一 09:00 |
+| `MCTP-FE-Dependency` | Pipeline | `Jenkinsfile.dependency` | 每周一 09:00、手动 |
+| `MCTP-Deploy` | Pipeline | 内联脚本（Jenkins 任务配置） | `main` 构建成功后自动触发 |
 
 现有的 `MCTP-Dependency-Health` 改成 `MCTP-FE-Dependency`（Script Path 指向 `Jenkinsfile.dependency`），不要再让它跑全量流水线。
 
@@ -40,13 +41,23 @@ GitHub Branch Source 会为每个分支和 PR 自动回写两个 status：`conti
 
 | 参数 | 默认 | 说明 |
 |---|---|---|
-| `SKIP_LIGHTHOUSE` | false | 跳过性能/无障碍检测；PR 构建本身就会跳过 |
+| `SKIP_LIGHTHOUSE` | false | 跳过性能/无障碍检测 |
+| `FORCE_LIGHTHOUSE` | false | 在 PR 或功能分支上强制运行 Lighthouse（默认只在 `develop`/`main` 跑） |
 
 ## 缓存与产物
 
 - Lighthouse 镜像 `mctp/lighthouse-ci:0.15.1` 首次构建 1–2 分钟，之后命中层缓存
-- 产物归档：`dist/**`、`.lighthouseci/**`
-- 每个分支保留 20 条构建、10 份产物；新构建会中止同分支进行中的旧构建
+- Lighthouse 只在 `develop`/`main` 运行；PR 构建默认跳过（太慢），需要时用 `FORCE_LIGHTHOUSE` 手动触发
+- 产物归档：`dist/index.html`、`dist/assets/**`、`.lighthouseci/**`（不再归档十几 MB 的 `dist/media/**`）
+- 每个分支保留 20 条构建、3 份产物；新构建会中止同分支进行中的旧构建
+- PR 构建结束后自动 `cleanWs()`，避免 `node_modules`/`dist` 占满执行器磁盘
+- `npm audit` 已移到 `MCTP-FE-Dependency` 每周巡检，主流水线不再因依赖告警变红
+
+## 生产部署
+
+- GitHub Pages 的 `deploy.yml` 只负责 `main` 前端预览
+- 生产由 `MCTP-Deploy` 负责：`MCTP-FE` 或 `MCTP-API-CI` 的 `main` 构建成功后自动触发，参数 `BRANCH=main`
+- `MCTP-Deploy` 只接受 `main`（`precheck` 阶段会拒绝其他分支），并发构建改为排队而不是中止
 
 ## 常见问题
 
