@@ -47,14 +47,14 @@ GitHub Branch Source 会为每个分支和 PR 自动回写两个 status：`conti
 ## 缓存与产物
 
 - Lighthouse 镜像 `mctp/lighthouse-ci:0.15.1` 首次构建 1–2 分钟，之后命中层缓存
-- Lighthouse 在 `develop`/`main` 与 PR 上运行；PR 构建约多 1 分钟，可用 `SKIP_LIGHTHOUSE` 临时跳过
+- Lighthouse 在 `develop`/`main`，以及包含 `src/**`、`public/**`、依赖/构建配置变更的 PR 上运行；纯文档 PR 自动跳过
 - 评分与断言摘要写入构建描述；PR 构建还会在 PR 上新增/更新一条 **CI 汇总评论**（Lighthouse + 测试通过数 + 覆盖率 + Jenkins 构建链接，`scripts/pr-comment.mjs`，带 HTML 标记，重复构建只更新不刷屏）
 - 单测通过 `--test-reporter=junit` 产出 `junit.xml`，`scripts/junit-normalize.mjs` 补上 Jenkins 需要的 `<testsuite>` 包裹，再由 `junit` 发布器保留测试趋势与失败用例
 - 产物归档：`dist/index.html`、`dist/assets/**`、`.lighthouseci/**`（不再归档十几 MB 的 `dist/media/**`）
-- 每个分支保留 20 条构建、3 份产物；新构建会中止同分支进行中的旧构建
+- 每个分支保留 10 条构建、2 份产物；新构建会中止同分支进行中的旧构建
 - PR 构建结束后自动 `cleanWs()`，避免 `node_modules`/`dist` 占满执行器磁盘
 - `npm audit` 已移到 `MCTP-FE-Dependency` 每周巡检，主流水线不再因依赖告警变红；巡检任务同时用 `uv export` + `pip-audit` 审计后端依赖
-- 覆盖率：单测额外跑一次 `node --test --experimental-test-coverage`，输出 `coverage.txt` 归档（先只留档，不设阈值）
+- 覆盖率：单测额外跑一次 `node --test --experimental-test-coverage`，`scripts/coverage-gate.mjs` 校验行覆盖率下限 **70%**（低于阈值构建失败）
 - checkout 使用 `skipDefaultCheckout` + 显式 `checkout scm`（`retry(2)`）；PR 构建先 `deleteDir()`，避免旧工作区造成空目录
 - Node 版本统一为 **24**（Jenkins `Nodejs24`、GitHub Actions、`engines >=24`、`.nvmrc`）
 
@@ -66,6 +66,12 @@ GitHub Branch Source 会为每个分支和 PR 自动回写两个 status：`conti
   - 漏洞清零 → 自动关闭对应旧 Issue
 - Issue 用 HTML 标记区分前端/后端，重复巡检只更新同一条；失败不影响巡检构建结果
 - 依赖 PR 评论与巡检 Issue 都使用 Jenkins 凭证 `github-MCTP`（需要 Issues 写权限），PR 评论只在 `CHANGE_ID` 存在时执行，所以协作者在仓库内分支提的 PR 同样会收到汇总
+
+## 磁盘治理
+
+- 多分支孤儿策略：`pruneDeadBranches=true`、`daysToKeep=0`、`numToKeep=0`，已关闭 PR / 已删除分支的任务在下次扫描时立即删除
+- `MCTP-Cleanup`（每周六 04:00，可手动）：报告 `df`、workspace、jobs 占用；按 GitHub 开放 PR 列表删除已关闭 PR 的工作区；删除 7 天未更新的旧工作区（保留 `*_develop`/`*_main`）；清理 `/tmp/mctp-contract-base-*`、dangling 镜像与 7 天前的 builder 缓存
+- Jenkinsfile 构建保留：10 条构建 / 2 份产物
 
 ## 生产部署
 

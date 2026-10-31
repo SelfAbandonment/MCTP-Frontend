@@ -9,7 +9,7 @@ pipeline {
         timestamps()
         timeout(time: 25, unit: 'MINUTES')
         disableConcurrentBuilds(abortPrevious: true)
-        buildDiscarder(logRotator(numToKeepStr: '20', artifactNumToKeepStr: '3'))
+        buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '2'))
         // 显式 checkout，便于先清理 PR 工作区并加一次重试
         skipDefaultCheckout()
     }
@@ -68,7 +68,10 @@ pipeline {
                             fi
                             rm -f coverage.txt
                             node --test --experimental-test-coverage > coverage.txt 2>&1 || true
-                            exit $status
+                            if [ "$status" -ne 0 ]; then
+                                exit "$status"
+                            fi
+                            node scripts/coverage-gate.mjs coverage.txt 70
                         '''
                     }
                 }
@@ -90,7 +93,19 @@ pipeline {
                     anyOf {
                         branch 'develop'
                         branch 'main'
-                        changeRequest()
+                        allOf {
+                            changeRequest()
+                            anyOf {
+                                changeset 'src/**'
+                                changeset 'public/**'
+                                changeset 'package.json'
+                                changeset 'package-lock.json'
+                                changeset 'vite.config.js'
+                                changeset 'index.html'
+                                changeset 'scripts/**'
+                                changeset 'docker/**'
+                            }
+                        }
                         expression { params.FORCE_LIGHTHOUSE }
                     }
                 }
