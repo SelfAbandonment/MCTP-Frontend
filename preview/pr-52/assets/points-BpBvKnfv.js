@@ -1,0 +1,1 @@
+import{i as e}from"./index-5A3yWdVe.js";var t={me:t=>e.get(`/api/v1/points/me/`,{signal:t}),grants:(t,n)=>e.get(`/api/v1/points/grants/`,{params:t,signal:n}),leaderboard:t=>e.get(`/api/v1/points/leaderboard/`,{signal:t}),manageAccounts:(t,n)=>e.get(`/api/v1/manage/points/`,{params:t,signal:n}),grant:t=>e.post(`/api/v1/manage/points/grants/`,t)};export{t};
