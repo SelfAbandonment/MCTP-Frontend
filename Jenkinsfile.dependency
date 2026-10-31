@@ -60,6 +60,20 @@ pipeline {
                 '''
             }
         }
+
+        stage('同步巡检 Issue') {
+            steps {
+                // 有漏洞则新建/更新 Issue，清零则自动关闭；失败不影响巡检结果
+                withCredentials([usernamePassword(credentialsId: 'github-MCTP', usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+                    withEnv([
+                        "GH_REPO_FE=SelfAbandonment/MCTP-Frontend",
+                        "GH_REPO_API=SelfAbandonment/MCTP-API"
+                    ]) {
+                        sh 'node scripts/security-issue.mjs || echo "巡检 Issue 同步失败（不影响构建结果）"'
+                    }
+                }
+            }
+        }
     }
 
     post {
