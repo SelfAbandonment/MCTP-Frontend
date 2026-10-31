@@ -10,6 +10,8 @@ pipeline {
         timeout(time: 25, unit: 'MINUTES')
         disableConcurrentBuilds(abortPrevious: true)
         buildDiscarder(logRotator(numToKeepStr: '20', artifactNumToKeepStr: '3'))
+        // 显式 checkout，便于先清理 PR 工作区并加一次重试
+        skipDefaultCheckout()
     }
 
     parameters {
@@ -22,6 +24,20 @@ pipeline {
     }
 
     stages {
+        stage('checkout') {
+            steps {
+                script {
+                    // PR 工作区先清空，避免旧工作区导致的空目录/脏文件问题
+                    if (env.CHANGE_ID) {
+                        deleteDir()
+                    }
+                }
+                retry(2) {
+                    checkout scm
+                }
+            }
+        }
+
         stage('环境信息') {
             steps {
                 sh 'node --version && npm --version'
@@ -50,6 +66,8 @@ pipeline {
                             if [ -f junit.xml ]; then
                                 node scripts/junit-normalize.mjs junit.xml
                             fi
+                            rm -f coverage.txt
+                            node --test --experimental-test-coverage > coverage.txt 2>&1 || true
                             exit $status
                         '''
                     }
@@ -78,10 +96,6 @@ pipeline {
                 }
             }
             steps {
-                // 注意：Docker Hub 上的 kanti/lighthouse-ci 并不是 GoogleChrome/lighthouse-ci
-                // （那是 2019 年另一个同名项目，CLI 叫 lighthouse-ci），镜像里没有 lhci 命令。
-                // 这里用 docker/lighthouse-ci.Dockerfile 自建镜像（Chromium + @lhci/cli），
-                // 首次构建约 1-2 分钟，之后命中层缓存。
                 sh '''
                     set -e
                     IMAGE=mctp/lighthouse-ci:0.15.1
@@ -128,6 +142,8 @@ pipeline {
             archiveArtifacts artifacts: 'dist/index.html,dist/assets/**', allowEmptyArchive: true
             // Lighthouse 的 JSON/HTML 报告，便于回溯评分明细
             archiveArtifacts artifacts: '.lighthouseci/**', allowEmptyArchive: true
+            // Node 原生覆盖率报告，先只留档不设阈值
+            archiveArtifacts artifacts: 'coverage.txt', allowEmptyArchive: true
             script {
                 // PR 工作区用完即清，避免 node_modules/dist 在 2 个执行器的磁盘上堆积
                 // 用 env.CHANGE_ID 判断：changeRequest() 在分支构建里也可能返回真值
