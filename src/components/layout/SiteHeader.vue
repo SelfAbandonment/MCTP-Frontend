@@ -18,12 +18,16 @@ const isHome = computed(() => route.path === '/')
 const playerTarget = computed(() => (auth.isLoggedIn ? '/dashboard' : '/login'))
 const joinGuide = 'https://docs.qq.com/space/DTXNidGZ1S2FncG9v'
 
-const navLinks = computed(() => [
-  { label: '首页', to: '/' },
-  { label: '公告', to: '/announcements' },
-  { label: '入服', href: joinGuide, external: true },
-  { label: '玩家中心', to: playerTarget.value },
-])
+const navLinks = computed(() => {
+  const links = [
+    { label: '首页', to: '/' },
+    { label: '公告', to: '/announcements' },
+    { label: '入服', href: joinGuide, external: true },
+    { label: '玩家中心', to: playerTarget.value },
+  ]
+  if (auth.isLoggedIn) links.splice(3, 0, { label: '积分', to: '/points' })
+  return links
+})
 
 function updateScrollState() {
   const y = window.scrollY || 0

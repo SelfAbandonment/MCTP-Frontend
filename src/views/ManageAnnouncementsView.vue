@@ -1,12 +1,25 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { communityApi } from '@/api/community'
 import ManagementHeading from '@/components/ManagementHeading.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
 import { usePagedResource } from '@/composables/usePagedResource'
+import {
+  ANNOUNCEMENT_CATEGORIES,
+  ANNOUNCEMENT_STATUS,
+  announcementCategory,
+  announcementQuery,
+  announcementStatus,
+} from '@/utils/announcements'
 import { errorMessage, fieldErrors, formatDate } from '@/utils/errors'
 
+const CATEGORY_FILTERS = [{ key: '', label: '全部分类' }, ...ANNOUNCEMENT_CATEGORIES]
+const STATUS_FILTERS = [{ key: '', label: '全部状态' }, ...Object.values(ANNOUNCEMENT_STATUS)]
+
 const { items, page, count, hasNext, hasPrevious, loading, error, load, retry } = usePagedResource(communityApi.manageAnnouncements)
+const search = ref('')
+const categoryFilter = ref('')
+const statusFilter = ref('')
 const selectedId = ref(null)
 const form = ref(emptyForm())
 const errors = ref({})
@@ -14,9 +27,43 @@ const message = ref('')
 const actionError = ref('')
 const saving = ref(false)
 const confirmingDelete = ref(false)
+const hasFilters = computed(() => Boolean(search.value.trim() || categoryFilter.value || statusFilter.value))
 
 function emptyForm() {
-  return { title: '', summary: '', body: '', is_published: false, published_at: '' }
+  return { title: '', summary: '', body: '', category: 'notice', is_pinned: false, is_published: false, published_at: '' }
+}
+
+function filterParams() {
+  return announcementQuery({
+    search: search.value,
+    category: categoryFilter.value,
+    status: statusFilter.value,
+  })
+}
+
+function applyFilters() {
+  select()
+  load(1, filterParams())
+}
+
+function clearFilters() {
+  if (!hasFilters.value) return
+  search.value = ''
+  categoryFilter.value = ''
+  statusFilter.value = ''
+  applyFilters()
+}
+
+function setCategoryFilter(value) {
+  if (categoryFilter.value === value) return
+  categoryFilter.value = value
+  applyFilters()
+}
+
+function setStatusFilter(value) {
+  if (statusFilter.value === value) return
+  statusFilter.value = value
+  applyFilters()
 }
 
 function select(item = null) {
@@ -27,8 +74,13 @@ function select(item = null) {
     localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
   }
   form.value = item ? {
-    title: item.title, summary: item.summary, body: item.body,
-    is_published: item.is_published, published_at: localDate,
+    title: item.title,
+    summary: item.summary,
+    body: item.body,
+    category: item.category || 'notice',
+    is_pinned: Boolean(item.is_pinned),
+    is_published: item.is_published,
+    published_at: localDate,
   } : emptyForm()
   errors.value = {}
   actionError.value = ''
@@ -97,6 +149,67 @@ onMounted(() => load())
           新建公告 +
         </button>
       </div>
+      <form
+        class="search-form filter-form"
+        role="search"
+        @submit.prevent="applyFilters"
+      >
+        <input
+          v-model="search"
+          class="form-input"
+          type="search"
+          maxlength="80"
+          aria-label="搜索公告"
+          placeholder="按标题、摘要或正文搜索"
+          :disabled="saving"
+        >
+        <select
+          :value="categoryFilter"
+          class="form-input filter-select"
+          aria-label="按分类筛选公告"
+          :disabled="saving"
+          @change="setCategoryFilter($event.target.value)"
+        >
+          <option
+            v-for="option in CATEGORY_FILTERS"
+            :key="option.key || 'all'"
+            :value="option.key"
+          >
+            {{ option.label }}
+          </option>
+        </select>
+        <select
+          :value="statusFilter"
+          class="form-input filter-select"
+          aria-label="按发布状态筛选公告"
+          :disabled="saving"
+          @change="setStatusFilter($event.target.value)"
+        >
+          <option
+            v-for="option in STATUS_FILTERS"
+            :key="option.key || 'all'"
+            :value="option.key"
+          >
+            {{ option.label }}
+          </option>
+        </select>
+        <button
+          class="btn-primary"
+          type="submit"
+          :disabled="saving || loading"
+        >
+          搜索
+        </button>
+        <button
+          v-if="hasFilters"
+          class="text-button"
+          type="button"
+          :disabled="saving || loading"
+          @click="clearFilters"
+        >
+          清除
+        </button>
+      </form>
       <div
         v-if="error"
         class="alert alert-error"
@@ -121,7 +234,7 @@ onMounted(() => load())
         v-else-if="!items.length"
         class="empty-state"
       >
-        还没有公告。从右侧写下第一条消息。
+        {{ hasFilters ? '没有找到匹配的公告。' : '还没有公告。从右侧写下第一条消息。' }}
       </p>
       <button
         v-for="item in items"
@@ -135,8 +248,15 @@ onMounted(() => load())
           <strong>{{ item.title }}</strong>
           <small>{{ formatDate(item.updated_at) }}</small>
         </span>
-        <span :class="['badge', { 'badge-muted': !item.is_published }]">
-          {{ !item.is_published ? '草稿' : item.published_at && new Date(item.published_at) > new Date() ? '定时' : '已发布' }}
+        <span class="list-row-meta">
+          <span class="tag">{{ announcementCategory(item).label }}</span>
+          <span
+            v-if="item.is_pinned"
+            class="tag tag-pin"
+          >置顶</span>
+          <span :class="['badge', { 'badge-muted': announcementStatus(item).key !== 'published' }]">
+            {{ announcementStatus(item).label }}
+          </span>
         </span>
       </button>
       <PaginationControls
@@ -214,6 +334,37 @@ onMounted(() => load())
               class="form-error"
             >{{ errors.body }}</span>
           </div>
+          <div class="form-group">
+            <label
+              class="form-label"
+              for="announcement-category"
+            >分类</label>
+            <select
+              id="announcement-category"
+              v-model="form.category"
+              class="form-input"
+              :aria-invalid="!!errors.category"
+            >
+              <option
+                v-for="option in ANNOUNCEMENT_CATEGORIES"
+                :key="option.key"
+                :value="option.key"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+            <span
+              v-if="errors.category"
+              class="form-error"
+            >{{ errors.category }}</span>
+          </div>
+          <label class="check-label">
+            <input
+              v-model="form.is_pinned"
+              type="checkbox"
+            >
+            置顶到公告列表最前
+          </label>
           <label class="check-label">
             <input
               v-model="form.is_published"
@@ -285,8 +436,19 @@ onMounted(() => load())
 <style scoped>
 fieldset { border: 0; min-width: 0; }
 form { margin-top: 4px; }
+.search-form { margin-top: 0; flex-wrap: wrap; }
+.search-form .form-input { flex: 1; }
+.search-form .filter-select { flex: 0 1 132px; min-width: 116px; }
 section[aria-label='公告列表'] .list-row:first-of-type { border-top: 1px solid var(--line); }
 section[aria-label='公告列表'] .empty-state { margin-top: 4px; }
+.list-row-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.list-row-meta .tag { flex-shrink: 0; }
 .panel-heading h2 {
   font-family: var(--font-display);
   font-size: clamp(24px, 2.4vw, 32px);
@@ -304,5 +466,6 @@ section[aria-label='公告列表'] .empty-state { margin-top: 4px; }
 .delete-confirm p { margin-bottom: 15px; }
 @media (max-width: 900px) {
   .delete-confirm { margin-top: 18px; }
+  .search-form .filter-select { flex: 1 1 calc(50% - 5px); }
 }
 </style>

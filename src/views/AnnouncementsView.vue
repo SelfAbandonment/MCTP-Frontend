@@ -22,7 +22,7 @@ import AnnouncementFeed from '@/components/AnnouncementFeed.vue'
         回到原野 ↗
       </RouterLink>
     </div>
-    <AnnouncementFeed />
+    <AnnouncementFeed searchable />
   </section>
 </template>
 

@@ -7,7 +7,8 @@
 - Vue 3 + Vite 前端 Dashboard。
 - 仓库路径：`/mnt/d/code/MCTP-FE`。
 - GitHub：`github.com/SelfAbandonment/MCTP-Frontend`。
-- 生产前端：GitHub Pages。
+- 生产前端：`MCTP-Deploy`（`main` 构建成功后自动部署）。
+- GitHub Pages：`main` 前端预览（`deploy.yml`），不是生产入口。
 - 当前后端 API：`http://api.mcreatopla.top:21009`。
 
 ## 分支规则
@@ -19,10 +20,10 @@
 
 ## CI 与 Jenkins
 
-- GitHub Actions：`ci.yml`（PR 跑 lint + test + build）、`deploy.yml`（push `main` 部署 Pages）。
-- Jenkins：`Jenkinsfile`（仓库根）对应多分支任务，develop/main/PR 都跑，结果回写 commit status。
+- GitHub Actions（必需检查）：`ci.yml` 跑 lint + test（JUnit/覆盖率门禁 70%）+ build，PR 上回写 CI 汇总评论并复用 `dist` 部署 `preview/pr-<n>/`；`preview.yml` 负责关闭清理与月初压缩 gh-pages；`deploy.yml` 部署 Pages 预览。
+- Jenkins：`Jenkinsfile` 只做 build + Lighthouse（warning 默认只记录，`LIGHTHOUSE_STRICT=true` 才标 UNSTABLE），PR 回写 Lighthouse 评论，`main` 通过后自动触发 `MCTP-Deploy`；不再重复 lint/单测。
 - 本地等价命令：`npm run lint:check`、`npm test`、`npm run build`。
-- Node 版本以 22 为准（Vite 8 要求 `^20.19.0 || >=22.12.0`，`engines` 已同步）。
+- Node 版本以 24 为准（Jenkins `Nodejs24` 与 GitHub Actions 统一；`engines` 为 `>=24`，`npm` 为 `>=11`）。
 
 ## 隐私与安全
 

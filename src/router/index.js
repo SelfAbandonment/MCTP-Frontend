@@ -25,6 +25,11 @@ const routes = [
     meta: { requiresAuth: true, title: '玩家中心 · MCTP' },
   },
   {
+    path: '/points',
+    component: () => import('@/views/PointsView.vue'),
+    meta: { requiresAuth: true, title: '积分 · MCTP' },
+  },
+  {
     path: '/manage',
     redirect: '/manage/announcements',
   },
@@ -39,9 +44,19 @@ const routes = [
     meta: { requiresAuth: true, requiresStaff: true, title: '玩家管理 · MCTP' },
   },
   {
+    path: '/manage/points',
+    component: () => import('@/views/ManagePointsView.vue'),
+    meta: { requiresAuth: true, requiresStaff: true, title: '积分发放 · MCTP' },
+  },
+  {
     path: '/announcements',
     component: () => import('@/views/AnnouncementsView.vue'),
     meta: { title: '公告 · MCTP' },
+  },
+  {
+    path: '/announcements/:id(\\d+)',
+    component: () => import('@/views/AnnouncementDetailView.vue'),
+    meta: { title: '公告详情 · MCTP' },
   },
   {
     path: '/session-unavailable',
@@ -69,7 +84,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHashHistory(import.meta.env.BASE_URL),
+  history: createWebHashHistory(),
   routes,
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) return savedPosition

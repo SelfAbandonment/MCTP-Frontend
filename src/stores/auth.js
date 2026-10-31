@@ -28,7 +28,11 @@ export const useAuthStore = defineStore('auth', () => {
   // allauth owns the browser session. After password login / signup / social
   // login we exchange that session for the JWT pair used by the API.
   async function adoptSession() {
+    const version = generation
     const res = await authApi.sessionToken()
+    // A logout that happened while the exchange was in flight must win: writing
+    // the late pair would otherwise resurrect a signed-out session.
+    if (version !== generation) throw new Error('会话已退出，请重新登录')
     const data = res.data?.data || {}
     setTokens(data.access, data.refresh)
     user.value = data.user || null
