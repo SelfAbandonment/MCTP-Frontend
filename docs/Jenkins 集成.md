@@ -42,13 +42,13 @@ GitHub Branch Source 会为每个分支和 PR 自动回写两个 status：`conti
 | 参数 | 默认 | 说明 |
 |---|---|---|
 | `SKIP_LIGHTHOUSE` | false | 跳过性能/无障碍检测 |
-| `FORCE_LIGHTHOUSE` | false | 在 PR 或功能分支上强制运行 Lighthouse（默认只在 `develop`/`main` 跑） |
+| `FORCE_LIGHTHOUSE` | false | 在非 PR 的功能分支上强制运行 Lighthouse（PR 与 `develop`/`main` 默认都会跑） |
 
 ## 缓存与产物
 
 - Lighthouse 镜像 `mctp/lighthouse-ci:0.15.1` 首次构建 1–2 分钟，之后命中层缓存
-- Lighthouse 只在 `develop`/`main` 运行；PR 构建默认跳过（太慢），需要时用 `FORCE_LIGHTHOUSE` 手动触发
-- Lighthouse 断言摘要（警告/错误数量与超标的 audit）写入构建描述，打开构建页即可看到
+- Lighthouse 在 `develop`/`main` 与 PR 上运行；PR 构建约多 1 分钟，可用 `SKIP_LIGHTHOUSE` 临时跳过
+- 评分与断言摘要写入构建描述；PR 构建还会在 PR 上新增/更新一条 **CI 汇总评论**（Lighthouse + 测试通过数 + 覆盖率 + Jenkins 构建链接，`scripts/pr-comment.mjs`，带 HTML 标记，重复构建只更新不刷屏）
 - 单测通过 `--test-reporter=junit` 产出 `junit.xml`，`scripts/junit-normalize.mjs` 补上 Jenkins 需要的 `<testsuite>` 包裹，再由 `junit` 发布器保留测试趋势与失败用例
 - 产物归档：`dist/index.html`、`dist/assets/**`、`.lighthouseci/**`（不再归档十几 MB 的 `dist/media/**`）
 - 每个分支保留 20 条构建、3 份产物；新构建会中止同分支进行中的旧构建
@@ -56,6 +56,16 @@ GitHub Branch Source 会为每个分支和 PR 自动回写两个 status：`conti
 - `npm audit` 已移到 `MCTP-FE-Dependency` 每周巡检，主流水线不再因依赖告警变红；巡检任务同时用 `uv export` + `pip-audit` 审计后端依赖
 - 覆盖率：单测额外跑一次 `node --test --experimental-test-coverage`，输出 `coverage.txt` 归档（先只留档，不设阈值）
 - checkout 使用 `skipDefaultCheckout` + 显式 `checkout scm`（`retry(2)`）；PR 构建先 `deleteDir()`，避免旧工作区造成空目录
+- Node 版本统一为 **24**（Jenkins `Nodejs24`、GitHub Actions、`engines >=24`、`.nvmrc`）
+
+## 依赖巡检 Issue
+
+- `MCTP-FE-Dependency` 在巡检结束后调用 `scripts/security-issue.mjs`：
+  - 前端 `npm audit` 有漏洞 → 在 MCTP-Frontend 新建/更新 `[安全巡检] 前端依赖漏洞（N 项）`
+  - 后端 `pip-audit` 有漏洞 → 在 MCTP-API 新建/更新 `[安全巡检] 后端依赖漏洞（N 项）`
+  - 漏洞清零 → 自动关闭对应旧 Issue
+- Issue 用 HTML 标记区分前端/后端，重复巡检只更新同一条；失败不影响巡检构建结果
+- 依赖 PR 评论与巡检 Issue 都使用 Jenkins 凭证 `github-MCTP`（需要 Issues 写权限），PR 评论只在 `CHANGE_ID` 存在时执行，所以协作者在仓库内分支提的 PR 同样会收到汇总
 
 ## 生产部署
 

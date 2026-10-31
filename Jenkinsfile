@@ -83,14 +83,14 @@ pipeline {
         }
 
         stage('Lighthouse 性能检测') {
-            // 只在 develop/main 跑；功能分支与 PR 默认跳过（PR 太慢），
-            // 需要时用 FORCE_LIGHTHOUSE 参数手动触发。
+            // develop/main 与 PR 都跑；PR 结果会回写评论，SKIP_LIGHTHOUSE 可跳过。
             when {
                 allOf {
                     expression { !params.SKIP_LIGHTHOUSE }
                     anyOf {
                         branch 'develop'
                         branch 'main'
+                        changeRequest()
                         expression { params.FORCE_LIGHTHOUSE }
                     }
                 }
@@ -125,12 +125,6 @@ pipeline {
                         "$IMAGE" \
                         lhci autorun --config=./lighthouserc.cjs
                 '''
-                script {
-                    // 把断言摘要写进构建描述，失败/警告不用翻日志就能看到
-                    def summary = sh(script: 'node scripts/lighthouse-summary.mjs', returnStdout: true).trim()
-                    currentBuild.description = summary
-                    echo summary
-                }
             }
         }
     }
@@ -144,6 +138,28 @@ pipeline {
             archiveArtifacts artifacts: '.lighthouseci/**', allowEmptyArchive: true
             // Node 原生覆盖率报告，先只留档不设阈值
             archiveArtifacts artifacts: 'coverage.txt', allowEmptyArchive: true
+            script {
+                // 汇总构建描述，并在 PR 上回写一条 CI 评论（Lighthouse/测试/覆盖率）
+                def summary = sh(
+                    script: 'node scripts/lighthouse-summary.mjs 2>/dev/null || true',
+                    returnStdout: true
+                ).trim()
+                if (summary) {
+                    currentBuild.description = summary
+                    echo summary
+                }
+                if (env.CHANGE_ID) {
+                    withCredentials([usernamePassword(credentialsId: 'github-MCTP', usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+                        withEnv([
+                            "LH_SUMMARY=${summary}",
+                            "PR_NUMBER=${env.CHANGE_ID}",
+                            "GH_REPO=SelfAbandonment/MCTP-Frontend"
+                        ]) {
+                            sh 'node scripts/pr-comment.mjs'
+                        }
+                    }
+                }
+            }
             script {
                 // PR 工作区用完即清，避免 node_modules/dist 在 2 个执行器的磁盘上堆积
                 // 用 env.CHANGE_ID 判断：changeRequest() 在分支构建里也可能返回真值
