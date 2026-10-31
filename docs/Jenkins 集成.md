@@ -5,7 +5,7 @@
 | 任务 | 类型 | 脚本 | 触发 |
 |---|---|---|---|
 | `MCTP-FE` | Multibranch Pipeline | `Jenkinsfile` | push `develop`/`main`、PR |
-| `MCTP-FE-Dependency` | Pipeline | `Jenkinsfile.dependency` | 每周一 09:00、手动 |
+| `MCTP-FE-Dependency` | Pipeline | `Jenkinsfile.dependency` | 每周一 09:00、手动（前端 audit + 后端 pip-audit） |
 | `MCTP-Deploy` | Pipeline | 内联脚本（Jenkins 任务配置） | `main` 构建成功后自动触发 |
 
 现有的 `MCTP-Dependency-Health` 改成 `MCTP-FE-Dependency`（Script Path 指向 `Jenkinsfile.dependency`），不要再让它跑全量流水线。
@@ -53,7 +53,9 @@ GitHub Branch Source 会为每个分支和 PR 自动回写两个 status：`conti
 - 产物归档：`dist/index.html`、`dist/assets/**`、`.lighthouseci/**`（不再归档十几 MB 的 `dist/media/**`）
 - 每个分支保留 20 条构建、3 份产物；新构建会中止同分支进行中的旧构建
 - PR 构建结束后自动 `cleanWs()`，避免 `node_modules`/`dist` 占满执行器磁盘
-- `npm audit` 已移到 `MCTP-FE-Dependency` 每周巡检，主流水线不再因依赖告警变红
+- `npm audit` 已移到 `MCTP-FE-Dependency` 每周巡检，主流水线不再因依赖告警变红；巡检任务同时用 `uv export` + `pip-audit` 审计后端依赖
+- 覆盖率：单测额外跑一次 `node --test --experimental-test-coverage`，输出 `coverage.txt` 归档（先只留档，不设阈值）
+- checkout 使用 `skipDefaultCheckout` + 显式 `checkout scm`（`retry(2)`）；PR 构建先 `deleteDir()`，避免旧工作区造成空目录
 
 ## 生产部署
 

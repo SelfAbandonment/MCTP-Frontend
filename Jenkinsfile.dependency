@@ -40,11 +40,31 @@ pipeline {
                 sh 'npm ls --all > dependency-tree.txt 2>&1 || true'
             }
         }
+
+        stage('后端依赖审计') {
+            steps {
+                // 只出报告，不因漏洞失败；API 仓库用 uv 导出锁定依赖后再跑 pip-audit
+                sh '''
+                    set -e
+                    export PATH="$HOME/.local/bin:$PATH"
+                    if ! command -v uv >/dev/null 2>&1; then
+                        echo "未找到 uv，安装到用户目录的 .local/bin"
+                        curl -LsSf https://astral.sh/uv/install.sh | sh
+                    fi
+                    rm -rf api-repo
+                    git clone --depth 1 https://github.com/SelfAbandonment/MCTP-API.git api-repo
+                    cd api-repo
+                    uv export --frozen --no-dev --format requirements-txt --output-file requirements.txt
+                    uvx --from pip-audit pip-audit -r requirements.txt > ../pip-audit.txt 2>&1 || true
+                    uvx --from pip-audit pip-audit -r requirements.txt -f json -o ../pip-audit.json || true
+                '''
+            }
+        }
     }
 
     post {
         always {
-            archiveArtifacts artifacts: 'dependency-tree.txt,npm-audit.txt,npm-audit.json,npm-outdated.txt', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'dependency-tree.txt,npm-audit.txt,npm-audit.json,npm-outdated.txt,pip-audit.txt,pip-audit.json', allowEmptyArchive: true
         }
     }
 }
