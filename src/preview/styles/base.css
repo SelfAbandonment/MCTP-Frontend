@@ -4,6 +4,26 @@
  *       全部选择器带 .preview- 前缀，避免污染现有框架页面。
  */
 
+/* 作用：预览页期间（html 带 data-theme，仅预览页设置、离开时清除）让 html/body 底色跟随预览主题，
+        并关闭滚动到顶/底时的回弹。
+   原因：滚动越过页面边界时（触控板/手机回弹）会露出 html/body 的底色，那是现有站点的近黑色，
+        与黄铜深褐不一致，形成一段「未覆盖」的空白；改为预览主题底色并禁用回弹后边界干净。 */
+html[data-theme],
+html[data-theme] body {
+  background: var(--preview-bg);
+  overscroll-behavior-y: none;
+}
+
+/* 作用：预览页期间取消现有 App.vue 外层 <main id="main-content" class="site-main"> 的留白与限宽。
+   原因：预览页作为 RouterView 渲染在 .site-main 里，该类自带上 104~132px / 下 64~92px 内边距与 90% 宽度限制，
+        导致页面顶部（往上滑到顶时最明显）与页脚下方各多出一段露出底色的空白带；
+        这里只在 html[data-theme]（仅预览页设置）下覆盖，不修改 App.vue，现有页面不受影响。 */
+html[data-theme] #main-content {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 /* 作用：预览页根容器——撑满视口、继承主题变量、统一字体。
    原因：字体变量在 theme.css 中定义，根容器统一挂载以便后代元素继承。 */
 .preview-root {
@@ -19,7 +39,9 @@
 .preview-main {
   width: min(1100px, 100% - 48px);
   margin: 0 auto;
-  padding: calc(96px + env(safe-area-inset-top)) 0 64px;
+  /* 原因：顶部导航高度已由 .preview-shell 的 padding-top 预留，这里只留 24px 呼吸间距。
+          之前此处又叠加了 96px + 安全区，导致顶栏与公告之间多出约 200px 空白带。 */
+  padding: 24px 0 0;
   display: flex;
   flex-direction: column;
   gap: 48px;

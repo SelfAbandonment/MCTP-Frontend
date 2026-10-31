@@ -147,7 +147,7 @@ onBeforeUnmount(() => {
         aria-hidden="true"
       >
         <div class="preview-intro__panel-logo">
-          MCTP
+          MCREATOPIA
         </div>
         <div class="preview-intro__panel-track">
           <div class="preview-intro__panel-bar" />
@@ -225,8 +225,11 @@ onBeforeUnmount(() => {
 /* 作用：面板顶部 Logo/标题。 */
 .preview-intro__panel-logo {
   font-family: var(--preview-font);
-  font-size: 26px;
-  letter-spacing: 0.28em;
+  /* 原因：站名由 4 字母「MCTP」改为 10 字母「MCREATOPIA」，固定 26px + 0.28em 字距在手机上会溢出面板；
+          改为随视口缩放（最小 18px、最大 26px）并收窄字距，大屏观感不变、小屏不换行。 */
+  font-size: clamp(18px, 5.5vw, 26px);
+  letter-spacing: 0.2em;
+  white-space: nowrap;
   color: var(--preview-accent);
   text-shadow: 0 0 16px color-mix(in srgb, var(--preview-accent) 55%, transparent);
 }

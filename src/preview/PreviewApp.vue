@@ -21,12 +21,10 @@ import IntroAnimation from '@/preview/components/IntroAnimation.vue'
 import CustomCursor from '@/preview/components/CustomCursor.vue'
 import PreviewHeader from '@/preview/components/PreviewHeader.vue'
 import AnnouncementSection from '@/preview/components/AnnouncementSection.vue'
-import AdBannerSection from '@/preview/components/AdBannerSection.vue'
 import FeatureShowcaseSection from '@/preview/components/FeatureShowcaseSection.vue'
 import DownloadSection from '@/preview/components/DownloadSection.vue'
 import StatusBarSection from '@/preview/components/StatusBarSection.vue'
 import PlaytimeRankingSection from '@/preview/components/PlaytimeRankingSection.vue'
-import SkinPreviewSection from '@/preview/components/SkinPreviewSection.vue'
 import RulesFaqSection from '@/preview/components/RulesFaqSection.vue'
 import EventsTimelineSection from '@/preview/components/EventsTimelineSection.vue'
 import GuestbookSection from '@/preview/components/GuestbookSection.vue'
@@ -73,22 +71,22 @@ const introDone = ref(false)
       id="preview-top"
       class="preview-shell"
     >
-      <!-- 作用：主内容区，第一屏为公告 + 广告，后续为占位区块。 -->
+      <!-- 作用：主内容区，第一屏为公告，后续为玩法 / 下载 / 功能模块。 -->
       <main class="preview-main">
-        <!-- 作用：第一屏——公告区与广告区左右并排。 -->
-        <div class="preview-first-screen">
-          <AnnouncementSection />
-          <AdBannerSection />
-        </div>
+        <!-- 作用：第一屏——公告区（广告区已按需求暂时移除，公告改为占满整行）。
+             恢复广告区：重新 import AdBannerSection（src/preview/components/AdBannerSection.vue），
+             在此处放回 <AdBannerSection />，并恢复双栏布局样式即可。 -->
+        <AnnouncementSection />
 
         <!-- 作用：玩法介绍区。 -->
         <FeatureShowcaseSection />
         <!-- 作用：下载区。 -->
         <DownloadSection />
-        <!-- 作用：功能模块区（第二阶段拆分为 A~H：状态条 / 排行榜 / 皮肤 / 规则 / 活动 / 留言 / STAFF）。 -->
+        <!-- 作用：功能模块区：A 状态条 / B 在线时长排行 / E 规则 FAQ / F 活动 / G 留言 / H STAFF。
+             原因：C 皮肤预览已按需求暂时取消（作用不大）；组件文件 SkinPreviewSection.vue 保留，
+                   需要恢复时重新 import 并放回 <SkinPreviewSection /> 即可。 -->
         <StatusBarSection />
         <PlaytimeRankingSection />
-        <SkinPreviewSection />
         <RulesFaqSection />
         <EventsTimelineSection />
         <GuestbookSection />
@@ -108,8 +106,9 @@ const introDone = ref(false)
 .preview-shell {
   position: relative;
   z-index: 1;
-  /* 原因：顶部导航已移出壳层并 fixed 置顶（高度约 64px），主内容需在顶部预留导航高度，避免第一屏被遮挡。 */
-  padding-top: 72px;
+  /* 原因：顶部导航已移出壳层并 fixed 置顶（高度约 64px），主内容需在顶部预留导航高度，避免第一屏被遮挡；
+          叠加刘海屏安全区（顶栏自身也叠加了 safe-area，二者保持一致）。 */
+  padding-top: calc(72px + env(safe-area-inset-top));
   animation: preview-shell-enter 0.6s ease-out both;
 }
 
@@ -123,20 +122,6 @@ const introDone = ref(false)
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-/* 作用：第一屏使用双栏布局，公告占主、广告占副；
-   原因：窄屏时自动堆叠为单列，保证移动端可用。 */
-.preview-first-screen {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 24px;
-}
-
-@media (max-width: 860px) {
-  .preview-first-screen {
-    grid-template-columns: 1fr;
   }
 }
 </style>

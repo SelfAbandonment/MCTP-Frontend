@@ -15,10 +15,9 @@ import { ref } from 'vue'
 // TODO-BACKEND: 待对接后端活动接口（建议返回 title / date / desc / link 字段）。
 // TODO-CONTENT: 活动标题 / 日期 / 描述 / 报名链接待服主提供。
 const RAW_EVENTS = [
-  { date: '2026-11-07', title: '秋日机械嘉年华', desc: '限时建厂挑战赛，前三名获得限定称号与物资奖励。', link: '' },
-  { date: '2026-10-24', title: '黄铜节·交易市场', desc: '玩家摆摊交易日，管理组开放临时传送点。', link: '' },
-  { date: '2026-10-10', title: '第一次工厂大比武', desc: '自动化产线产量比拼，胜者获得「流水线之王」称号。', link: '' },
-  { date: '2026-09-20', title: '开服庆典', desc: '庆祝服务器开放，全服双倍经验与掉落。', link: '' },
+  { date: '2026-11-07', title: 'MCGO第三届大赛', desc: 'AAA', link: '' },
+  { date: '2026-10-24', title: 'MCGO第二届大赛', desc: 'BBB', link: '' },
+  { date: '2026-10-10', title: 'MCGO第一届大赛', desc: 'CCC', link: '' },
 ]
 
 // 作用：今天的本地日期字符串（YYYY-MM-DD），活动当天仍视为「预告」（可报名）。

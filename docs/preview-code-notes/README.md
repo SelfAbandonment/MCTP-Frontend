@@ -17,6 +17,7 @@ AIGC:
 
 | 文档 | 内容 |
 | --- | --- |
+| [文本修改位置.md](./文本修改位置.md) | 玩法 / 下载 / 在线时长 / 活动 / STAFF 等文案在哪个文件哪一段改 |
 | [本轮优化记录.md](./本轮优化记录.md) | 第三轮优化：占位链接修复 / 路由懒加载 / 指令局部注册 / 日期自动计算 / Lint 清零等 |
 | [待定制内容清单.md](./待定制内容清单.md) | 文案 / 素材 / 链接 / 数据接口待补项汇总（发服主填写） |
 | [预览页使用说明.md](./预览页使用说明.md) | 如何预览、验证生产构建、以及如何关掉预览路由 |
@@ -68,13 +69,13 @@ AIGC:
 | [AccountArea.md](./AccountArea.md) | `src/preview/components/AccountArea.vue`（账号区两态） |
 | [ThemeSwitcher.md](./ThemeSwitcher.md) | `src/preview/components/ThemeSwitcher.vue`（三主题切换） |
 | [AnnouncementSection.md](./AnnouncementSection.md) | `src/preview/components/AnnouncementSection.vue`（公告区） |
-| [AdBannerSection.md](./AdBannerSection.md) | `src/preview/components/AdBannerSection.vue`（广告区） |
+| [AdBannerSection.md](./AdBannerSection.md) | `src/preview/components/AdBannerSection.vue`（广告区，**当前未挂载**，保留以便恢复） |
 | [PlaceholderSection.md](./PlaceholderSection.md) | `src/preview/components/PlaceholderSection.vue`（通用占位区块，第二阶段后不再用于主区块） |
 | [FeatureShowcaseSection.md](./FeatureShowcaseSection.md) | `src/preview/components/FeatureShowcaseSection.vue`（玩法介绍区） |
 | [DownloadSection.md](./DownloadSection.md) | `src/preview/components/DownloadSection.vue`（下载区） |
 | [StatusBarSection.md](./StatusBarSection.md) | `src/preview/components/StatusBarSection.vue`（功能 A：服务器状态条） |
 | [PlaytimeRankingSection.md](./PlaytimeRankingSection.md) | `src/preview/components/PlaytimeRankingSection.vue`（功能 B：在线时长排行） |
-| [SkinPreviewSection.md](./SkinPreviewSection.md) | `src/preview/components/SkinPreviewSection.vue`（功能 C：皮肤预览 + 基本信息） |
+| [SkinPreviewSection.md](./SkinPreviewSection.md) | `src/preview/components/SkinPreviewSection.vue`（功能 C：皮肤预览，**当前未挂载**，保留以便恢复） |
 | [RulesFaqSection.md](./RulesFaqSection.md) | `src/preview/components/RulesFaqSection.vue`（功能 E：规则 / FAQ 折叠） |
 | [EventsTimelineSection.md](./EventsTimelineSection.md) | `src/preview/components/EventsTimelineSection.vue`（功能 F：活动预告与时间线） |
 | [GuestbookSection.md](./GuestbookSection.md) | `src/preview/components/GuestbookSection.vue`（功能 G：玩家留言 / localStorage） |

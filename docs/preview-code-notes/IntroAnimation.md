@@ -34,7 +34,7 @@ AIGC:
 
 ### 加载遮罩（自动播放，无需用户操作）
 - 全屏主题底色（`--preview-bg`）+ 极淡网格层（`--preview-line-strong` 细线交叉，透明度 0.14）
-- 居中「加载面板」：顶部 MCTP 标题 → 0.25vw 级极细进度条（`max(1px, 0.25vw)`）+ 百分比 → monospace 终端日志逐行输出（`> Pre-fetching assets...` / `> Loading archive...` 等，每行 0.5s）
+- 居中「加载面板」：顶部 MCREATOPIA 标题（字号 `clamp(18px, 5.5vw, 26px)`，10 个字母在手机上也不溢出面板） → 0.25vw 级极细进度条（`max(1px, 0.25vw)`）+ 百分比 → monospace 终端日志逐行输出（`> Pre-fetching assets...` / `> Loading archive...` 等，每行 0.5s）
 - 面板下方「点击任意位置开始」提示：默认隐藏，日志结束且进度 100% 后 `is-ready` 闪烁
 - `TODO-AUDIO`：音频开关（Off/On）占位注释，待接入开场音效后实现
 

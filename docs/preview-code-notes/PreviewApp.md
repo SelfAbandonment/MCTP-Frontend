@@ -19,7 +19,7 @@ AIGC:
 `src/preview/PreviewApp.vue`
 
 ## 文件用途
-预览页根组件：串联「启动遮罩（IntroAnimation）→ 主界面（顶部导航 + 公告/广告区 + 玩法介绍 + 下载区 + 功能模块 A~H + footer）」，并负责初始化主题。
+预览页根组件：串联「启动遮罩（IntroAnimation）→ 主界面（顶部导航 + 公告区 + 玩法介绍 + 下载区 + 功能模块 A~H + footer）」，并负责初始化主题。
 启动遮罩上滑退场后，主界面壳层 `.preview-shell` 播放「从下方轻微上移 + 淡入」入场动画，形成上下衔接的进入效果。
 
 ## 主要代码说明
@@ -38,11 +38,12 @@ AIGC:
 | `v-else` → `.preview-shell`（`id="preview-top"`） | 主界面内容壳层，用 `position:relative + z-index:1` 抬到背景层之上；`id` 供品牌按钮返回顶部。 |
 | `.preview-shell { animation: preview-shell-enter 0.6s ease-out both }` | 主界面壳层入场动画：从下方轻微上移 + 淡入；与 IntroAnimation 遮罩上滑（0.55s）上下衔接——遮罩向上滑出完成瞬间，主界面从下方淡入上移。 |
 | `@keyframes preview-shell-enter`（`from { opacity:0; transform: translateY(28px) }` → `to { opacity:1; transform: translateY(0) }`） | 入场动画关键帧：0.6s、`ease-out`、`both` 填充模式保证首帧即隐藏、结束停在最终态。 |
-| `PreviewHeader` / `main.preview-main` / `PreviewFooter` | 主界面骨架：顶部导航 + 第一屏（公告区 + 广告区）+ 玩法/下载/功能模块 + footer。 |
-| `<AnnouncementSection />` + `<AdBannerSection />` | 第一屏内容：公告区（模拟数据）与广告区（占位横幅）。 |
+| `PreviewHeader` / `main.preview-main` / `PreviewFooter` | 主界面骨架：顶部导航 + 第一屏（公告区）+ 玩法/下载/功能模块 + footer。 |
+| `<AnnouncementSection />` | 第一屏内容：公告区，占满整行。广告区已按需求暂时移除，组件文件 `AdBannerSection.vue` 保留，恢复方法见模板注释。 |
 | `<FeatureShowcaseSection />` | 玩法介绍区。 |
 | `<DownloadSection />` | 下载区。 |
-| `<StatusBarSection />` 等 7 个功能组件 | 功能模块区：状态条（A）/ 在线时长排行（B）/ 皮肤预览（C）/ 规则FAQ（E）/ 活动时间线（F）/ 玩家留言（G）/ STAFF（H），依次编排在 main 内。 |
+| `<StatusBarSection />` 等 6 个功能组件 | 功能模块区：状态条（A）/ 在线时长排行（B）/ 规则FAQ（E）/ 活动时间线（F）/ 玩家留言（G）/ STAFF（H），依次编排在 main 内。皮肤预览（C）已按需求暂时取消，组件文件 `SkinPreviewSection.vue` 保留。 |
+| `.preview-shell { padding-top: calc(72px + env(safe-area-inset-top)) }` | 为 fixed 顶栏预留高度（含刘海屏安全区）；顶部留白只在这里算一次。 |
 
 ## 过渡衔接说明
 1. IntroAnimation 遮罩上滑（GSAP `yPercent: -100`、0.55s、`power2.inOut`），滑出动画 `onComplete` 后再 `emit('finish')`。

@@ -234,6 +234,23 @@ onBeforeUnmount(() => {
   }
 }
 
+/* 作用：手机宽度（≤520px）只保留齿轮图标、收紧间距。
+   原因：375px 手机上「站名 + 登录/注册 + 三个主题按钮」总宽约 417px，超出屏幕产生横向滚动，
+        右侧露出一段空白；隐藏站名文字（齿轮图标仍可点击回到顶部）后整行可放下。 */
+@media (max-width: 520px) {
+  .preview-header__inner {
+    width: calc(100% - 24px);
+    gap: 8px;
+  }
+  .preview-header__name {
+    display: none;
+  }
+  .preview-header__right {
+    margin-left: auto;
+    gap: 8px;
+  }
+}
+
 @keyframes preview-header-spin {
   to {
     transform: rotate(360deg);

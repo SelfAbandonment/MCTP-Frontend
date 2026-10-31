@@ -63,6 +63,15 @@ const themeList = Object.values(themeStore.THEMES)
   border-right: none;
 }
 
+/* 作用：手机宽度（≤520px）收窄按钮内边距与字号。
+   原因：配合顶栏在 375px 手机上放得下，避免横向滚动。 */
+@media (max-width: 520px) {
+  .preview-theme-switch__btn {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+}
+
 /* 作用：当前主题高亮——铜黄底加深色文字。 */
 .preview-theme-switch__btn--active {
   background: var(--preview-accent);

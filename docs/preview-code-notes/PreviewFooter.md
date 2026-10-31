@@ -15,7 +15,7 @@ AIGC:
 `src/preview/components/PreviewFooter.vue`
 
 ## 文件用途
-预览页 footer 组件：展示服务器标语、社交入口图标位（Discord / QQ群 / B站 / 邮箱 / 社区 / Wiki）、合规免责声明、版权与备案占位，并预留访问统计挂载位置。
+预览页 footer 组件：展示服务器标语、社交入口图标位（QQ群 / B站 / 邮箱；Discord / 玩家社区 / Wiki 已按需求删除）、合规免责声明、版权与备案占位，并预留访问统计挂载位置。
 
 ## 主要代码说明
 

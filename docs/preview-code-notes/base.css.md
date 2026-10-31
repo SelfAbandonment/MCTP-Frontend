@@ -23,7 +23,7 @@ AIGC:
 | --- | --- |
 | `.preview-root` | 预览页根容器：撑满视口、继承主题变量与字体；`transition` 让主题切换背景/文字平滑过渡。 |
 | `.preview-main` | 主内容容器：`min(1100px, 100% - 48px)` 限宽居中、上下留白、纵向 flex + gap 统一区块间距。 |
-| `.preview-card` | 通用面板卡片：公告卡片、广告框、占位框共用，视觉统一（暗棕底 + 铜黄描边 + 阴影）。 |
+| `.preview-card` | 通用面板卡片：各区块卡片共用，视觉统一（暗棕底 + 铜黄描边 + 阴影）。 |
 | `.preview-section-title` | 区块标题：像素感字体 + 铜黄强调色，`letter-spacing` 增强工业风标题感。 |
 | `.preview-btn` / `.preview-btn--ghost` | 通用主按钮（铜黄底）与次要按钮（幽灵描边），悬停有加深/上浮反馈。 |
 | `.preview-btn:active` | 按钮按下轻微下沉，增强点击手感。 |
@@ -34,7 +34,10 @@ AIGC:
 | `.preview-root ::-webkit-scrollbar*` | 自定义 WebKit 滚动条，使深色工业主题下滚动条更协调。 |
 | `.preview-card` 四角 `radial-gradient` 铆钉 + `::before` 铜黄顶线 | 深褐平色大块易单调，加铆钉/顶线营造机械动力式工业细节；颜色跟随 `--preview-accent` 随主题联动。 |
 | `.preview-card` / `.preview-btn` 的 `transition` | 主题切换与交互时背景/描边/颜色做 0.3s 平滑过渡。 |
-| `.preview-main { padding-top: calc(96px + env(safe-area-inset-top)) }` / `.preview-header` 安全区 | 兼容 iPhone 刘海屏。 |
+| `.preview-main { padding: 24px 0 0 }` | 顶栏高度已由 `.preview-shell` 预留，这里只留 24px 间距（原先又叠加 96px，导致顶栏下方多出约 200px 空白）。 |
+| `html[data-theme], html[data-theme] body { background; overscroll-behavior-y: none }` | 预览页期间 html/body 底色跟随预览主题、关闭边界回弹，滚到顶/底不再露出现有站点的近黑色。 |
+| `html[data-theme] #main-content { width:100%; margin:0; padding:0 }` | 取消 App.vue 外层 `.site-main` 的上下留白（104~132px / 64~92px）和 90% 限宽，这是「往上滑到顶多一段空白」的根因；只在预览页生效，不改 App.vue。 |
+| `.preview-header` 安全区 | 兼容 iPhone 刘海屏。 |
 | `.preview-root img { -webkit-touch-callout: none; user-drag: none }` | 禁止长按图片弹菜单与拖拽，保持工业风观感。 |
 | `.has-custom-cursor ...` | 启用自定义光标时隐藏系统光标（输入框保留文本光标）。 |
 

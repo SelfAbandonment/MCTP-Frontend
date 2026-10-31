@@ -1,18 +1,16 @@
 <script setup>
 /**
  * 文件用途：预览页 footer 组件
- * 作用：展示服务器标语、社交入口图标位（Discord / QQ群 / B站 / 邮箱 / 社区 / Wiki）、
+ * 作用：展示服务器标语、社交入口图标位（QQ群 / B站 / 邮箱）、
  *       合规免责声明、版权与备案占位，并预留访问统计挂载位置。
  */
 // 作用：社交入口占位数据（各平台入口，链接待补）。
+// 原因：按需求删去 Discord / 玩家社区 / Wiki，只保留国内玩家常用的 QQ 群 / B站 / 邮箱。
 // TODO-BACKEND: 外部链接地址待补，当前 href 为空字符串占位（点击不跳转）；图标为通用占位图形，非平台官方 logo。
 const socials = [
-  { key: 'discord', label: 'Discord', href: '' },
   { key: 'qq', label: 'QQ 群', href: '' },
   { key: 'bilibili', label: 'B站', href: '' },
   { key: 'mail', label: '邮箱', href: '' },
-  { key: 'community', label: '玩家社区', href: '' },
-  { key: 'wiki', label: 'Wiki', href: '' },
 ]
 </script>
 
@@ -52,10 +50,7 @@ const socials = [
           stroke-linejoin="round"
           aria-hidden="true"
         >
-          <template v-if="s.key === 'discord'">
-            <path d="M4 5h16v10H9l-4 4V5z" />
-          </template>
-          <template v-else-if="s.key === 'qq'">
+          <template v-if="s.key === 'qq'">
             <circle
               cx="9"
               cy="9"
@@ -79,7 +74,7 @@ const socials = [
             />
             <path d="M10 10l5 2-5 2z" />
           </template>
-          <template v-else-if="s.key === 'mail'">
+          <template v-else>
             <rect
               x="3"
               y="5"
@@ -88,18 +83,6 @@ const socials = [
               rx="2"
             />
             <path d="M3 7l9 6 9-6" />
-          </template>
-          <template v-else-if="s.key === 'community'">
-            <circle
-              cx="12"
-              cy="12"
-              r="9"
-            />
-            <path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" />
-          </template>
-          <template v-else>
-            <path d="M4 5c3-1 5-1 8 1v13c-3-2-5-2-8-1V5z" />
-            <path d="M20 5c-3-1-5-1-8 1v13c3-2 5-2 8-1V5z" />
           </template>
         </svg>
         <span>{{ s.label }}</span>

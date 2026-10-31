@@ -10,10 +10,10 @@ import { tilt as vTilt } from '@/preview/directives/tilt'
 // 作用：管理组成员数据。
 // TODO-CONTENT: 成员为模拟数据，待服主替换为真实管理组名单与职责。
 const staffs = [
-  { title: '服主', name: 'MCTP_Owner', duty: '服务器整体运营与版本决策' },
-  { title: '技术管理员', name: 'Dev_Leon', duty: '模组整合、服务器维护与性能优化' },
-  { title: '建筑管理员', name: 'Arch_Ming', duty: '主城规划、建筑审核与保护' },
-  { title: '社区管理员', name: 'Mod_Fox', duty: '玩家反馈、活动策划与纠纷仲裁' },
+  { title: '服主', name: 'Under_p', duty: '服务器整体运营与版本决策' },
+  { title: '技术管理员', name: 'Self、Qisumei', duty: '模组整合、服务器维护与性能优化' },
+  { title: '建筑管理员', name: 'Limor', duty: '主城规划、建筑审核与保护' },
+  { title: '社区管理员', name: 'Limor、Gouko', duty: '玩家反馈、活动策划与纠纷仲裁' },
 ]
 </script>
 

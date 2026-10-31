@@ -10,7 +10,9 @@ import { reveal as vReveal } from '@/preview/directives/reveal'
 import { tilt as vTilt } from '@/preview/directives/tilt'
 // 作用：下载项数据（版本类型 + 说明 + 占位链接 + 是否推荐）。
 // 原因：下载链接尚未确定，href 留空表示「待补」，后续对接后端或静态资源时填入真实地址即可。
-// TODO-BACKEND: 三个下载地址均待补（href 为空字符串）；recommended 由服主定版后调整。
+// 原因：按需求移除「基岩版客户端」（Java 版 Forge 模组服，基岩版无法进入）。
+// TODO-BACKEND: 两个下载地址均待补（href 为空字符串）；recommended 由服主定版后调整。
+// TODO-CONTENT: label（标题）/ desc（说明）文案可直接在下方修改。
 const downloads = [
   {
     id: 'java',
@@ -18,13 +20,6 @@ const downloads = [
     desc: 'PC 端 / Forge + Create 机械动力整合',
     href: '',
     recommended: true,
-  },
-  {
-    id: 'bedrock',
-    label: '基岩版客户端',
-    desc: '手机 / Win10 基岩版入口',
-    href: '',
-    recommended: false,
   },
   {
     id: 'pack',
@@ -46,7 +41,7 @@ const downloads = [
     <h2 class="preview-section-title">
       下载区
     </h2>
-    <!-- 作用：下载项列表（三按钮并排，窄屏纵向）；v-reveal 错峰入场 + v-tilt 鼠标 3D 倾斜。 -->
+    <!-- 作用：下载项列表（两按钮并排，窄屏纵向）；v-reveal 错峰入场 + v-tilt 鼠标 3D 倾斜。 -->
     <div class="preview-download__grid">
       <a
         v-for="(d, i) in downloads"
@@ -79,11 +74,11 @@ const downloads = [
 </template>
 
 <style scoped>
-/* 作用：下载项三列网格。
-   原因：三个下载入口同等重要，均等并排视觉均衡；窄屏纵向堆叠。 */
+/* 作用：下载项两列网格。
+   原因：移除基岩版后剩 Java 版 + 整合包两个入口，均等两列并排视觉均衡；窄屏纵向堆叠。 */
 .preview-download__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
 }
 

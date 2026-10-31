@@ -59,6 +59,19 @@ const { user } = storeToRefs(authStore)
   gap: 10px;
 }
 
+/* 作用：手机宽度（≤520px）收窄登录/注册按钮，且不允许文字竖排换行。
+   原因：原先按钮被挤压后「登录」会断成上下两行；配合顶栏在 375px 手机上不产生横向滚动。 */
+@media (max-width: 520px) {
+  .preview-account {
+    gap: 6px;
+  }
+  .preview-account .preview-btn {
+    padding: 6px 10px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+}
+
 /* 作用：头像占位图尺寸与圆形裁切。 */
 .preview-account__avatar {
   width: 36px;

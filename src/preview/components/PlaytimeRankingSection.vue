@@ -10,11 +10,11 @@ import { reveal as vReveal } from '@/preview/directives/reveal'
 // 原因：后端排行接口未接入，先用模拟数据验证布局与视觉。
 // TODO-BACKEND: 待对接后端在线时长排行接口（建议返回玩家名 + 在线时长字段）。
 const ranking = [
-  { rank: 1, name: 'SteelSmith', hours: 286 },
-  { rank: 2, name: 'Ironforge_Leon', hours: 241 },
-  { rank: 3, name: 'CopperKite', hours: 198 },
-  { rank: 4, name: 'MechMing', hours: 156 },
-  { rank: 5, name: 'RedstoneFox', hours: 122 },
+  { rank: 1, name: 'Limor', hours: 1451 },
+  { rank: 2, name: 'Self', hours: 241 },
+  { rank: 3, name: 'Underp', hours: 198 },
+  { rank: 4, name: 'AAA', hours: 156 },
+  { rank: 5, name: 'Gk', hours: 122 },
 ]
 
 // 作用：格式化时长（小时转 天/小时 文本）。
@@ -108,6 +108,23 @@ function formatHours(h) {
 .preview-rank__hours {
   color: var(--preview-text-soft);
   text-align: right;
+}
+
+/* 作用：手机宽度（≤520px）改为「排名窄列 + 名字自适应 + 时长按内容宽度」的三栏。
+   原因：原固定 64px + 160px 两列加上卡片内边距，在 375px 手机上超出屏幕约 40px，
+        整页出现横向滚动、右侧露出空白；名字过长时省略号截断，不再撑破布局。 */
+@media (max-width: 520px) {
+  .preview-rank__head,
+  .preview-rank__row {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .preview-rank__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 /* 作用：TODO 提示。 */
