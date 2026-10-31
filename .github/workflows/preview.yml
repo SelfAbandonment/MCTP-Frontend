@@ -1,0 +1,143 @@
+name: PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+  # 兜底：清理已关闭但未被 closed 事件清理的预览目录
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+# 同一 PR 只保留最新一次预览；关闭时串行清理
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.action != 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build preview
+        run: npm run build -- --base=/MCTP-Frontend/preview/pr-${{ github.event.pull_request.number }}/
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+
+      - name: Deploy preview to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          destination_dir: preview/pr-${{ github.event.pull_request.number }}
+          keep_files: true
+
+      - name: Upsert preview comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PREVIEW_URL: https://selfabandonment.github.io/MCTP-Frontend/preview/pr-${{ github.event.pull_request.number }}/
+        run: |
+          set -e
+          body=$(printf '<!-- mctp-preview -->\n### 预览已更新\n\n%s\n\n> 由 GitHub Actions 自动部署；PR 关闭后清理。' "$PREVIEW_URL")
+          id=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments?per_page=100" \
+            --jq '.[] | select(.body | contains("<!-- mctp-preview -->")) | .id' | head -1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${id}" -f body="$body" >/dev/null
+            echo "已更新预览评论 #$id"
+          else
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" -f body="$body" >/dev/null
+            echo "已新增预览评论"
+          fi
+
+  cleanup:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Remove preview from gh-pages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PREVIEW_DIR: preview/pr-${{ github.event.pull_request.number }}
+        run: |
+          set -e
+          git clone --depth 1 --branch gh-pages \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" pages
+          if [ -d "pages/${PREVIEW_DIR}" ]; then
+            rm -rf "pages/${PREVIEW_DIR}"
+            cd pages
+            git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -am "chore: 清理 PR #${PR_NUMBER} 预览"
+            git push
+            echo "已删除 ${PREVIEW_DIR}"
+          else
+            echo "预览目录不存在：${PREVIEW_DIR}"
+          fi
+
+      - name: Mark preview comment as cleaned
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -e
+          body=$(printf '<!-- mctp-preview -->\n### 预览已清理\n\n该 PR 已关闭，预览站点已删除。')
+          id=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments?per_page=100" \
+            --jq '.[] | select(.body | contains("<!-- mctp-preview -->")) | .id' | head -1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${id}" -f body="$body" >/dev/null
+          fi
+
+  prune:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Remove previews for closed PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          open=$(gh api "repos/${GITHUB_REPOSITORY}/pulls?state=open&per_page=100" --jq '.[].number')
+          git clone --depth 1 --branch gh-pages \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" pages
+          cd pages
+          changed=0
+          for dir in preview/pr-*; do
+            [ -d "$dir" ] || continue
+            number="${dir##*/pr-}"
+            if ! printf '%s\n' "$open" | grep -qx "$number"; then
+              rm -rf "$dir"
+              changed=1
+              echo "已删除 $dir"
+            fi
+          done
+          if [ "$changed" -eq 1 ]; then
+            git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -am "chore: 清理已关闭 PR 的预览"
+            git push
+          else
+            echo "没有需要清理的预览"
+          fi

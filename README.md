@@ -167,11 +167,12 @@ MCTP-Frontend/
 
 ## 部署
 
-推送到 `main` 分支自动触发 GitHub Actions，构建后部署到 GitHub Pages。
-必须先设置仓库 Actions variable `VITE_API_BASE_URL` 为实际 **HTTPS** 后端地址；
-工作流会拒绝空值或 HTTP 地址，不再使用旧 Render 地址。
-当前文档中的 HTTP API 可用于 HTTP 本地开发，但不能直接供 HTTPS GitHub Pages 调用。
-正式发布前还需先部署后端迁移、校验 CORS 与 Microsoft 回调配置，然后再发布前端。
+- **预览**：push `main` 自动构建并发布到 GitHub Pages（`https://selfabandonment.github.io/MCTP-Frontend/`）。
+- **PR 预览**：每个同仓库 PR 会部署到 `preview/pr-<编号>/`，并在 PR 评论里给出链接；PR 关闭后自动清理。
+- **生产**：由 Jenkins `MCTP-Deploy` 在 `main` 构建成功后自动部署，GitHub Pages 只作预览入口。
+- 必须先设置仓库 Actions variable `VITE_API_BASE_URL` 为实际 **HTTPS** 后端地址；工作流会拒绝空值或 HTTP 地址。
+- 当前文档中的 HTTP API 可用于 HTTP 本地开发，但不能直接供 HTTPS GitHub Pages 调用。
+- 正式发布前还需先部署后端迁移、校验 CORS 与 Microsoft 回调配置，然后再发布前端。
 
 ## 贡献
 
