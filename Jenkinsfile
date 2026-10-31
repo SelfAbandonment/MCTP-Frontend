@@ -9,11 +9,12 @@ pipeline {
         timestamps()
         timeout(time: 25, unit: 'MINUTES')
         disableConcurrentBuilds(abortPrevious: true)
-        buildDiscarder(logRotator(numToKeepStr: '20', artifactNumToKeepStr: '10'))
+        buildDiscarder(logRotator(numToKeepStr: '20', artifactNumToKeepStr: '3'))
     }
 
     parameters {
         booleanParam(name: 'SKIP_LIGHTHOUSE', defaultValue: false, description: '跳过 Lighthouse 性能与无障碍检测')
+        booleanParam(name: 'FORCE_LIGHTHOUSE', defaultValue: false, description: '在非 develop/main 构建（含 PR）中强制运行 Lighthouse')
     }
 
     environment {
@@ -21,6 +22,12 @@ pipeline {
     }
 
     stages {
+        stage('环境信息') {
+            steps {
+                sh 'node --version && npm --version'
+            }
+        }
+
         stage('安装依赖') {
             steps {
                 sh 'npm ci --no-audit --no-fund'
@@ -42,12 +49,7 @@ pipeline {
             }
         }
 
-        stage('依赖安全扫描') {
-            steps {
-                sh 'npm audit --audit-level=high'
-            }
-        }
-
+        // npm audit 已移到 MCTP-FE-Dependency 每周巡检，主流水线只做构建门禁
         stage('构建项目') {
             steps {
                 sh 'NODE_ENV=production npm run build -- --base=/'
@@ -55,11 +57,16 @@ pipeline {
         }
 
         stage('Lighthouse 性能检测') {
-            // PR 构建跳过（太慢），develop/main 默认跑；需要时用参数强制跳过
+            // 只在 develop/main 跑；功能分支与 PR 默认跳过（PR 太慢），
+            // 需要时用 FORCE_LIGHTHOUSE 参数手动触发。
             when {
                 allOf {
                     expression { !params.SKIP_LIGHTHOUSE }
-                    not { changeRequest() }
+                    anyOf {
+                        branch 'develop'
+                        branch 'main'
+                        expression { params.FORCE_LIGHTHOUSE }
+                    }
                 }
             }
             steps {
@@ -102,12 +109,29 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: 'dist/**', allowEmptyArchive: true
+            // 只归档入口与静态资源，避免每个分支任务囤积十几 MB 的视频产物
+            archiveArtifacts artifacts: 'dist/index.html,dist/assets/**', allowEmptyArchive: true
             // Lighthouse 的 JSON/HTML 报告，便于回溯评分明细
             archiveArtifacts artifacts: '.lighthouseci/**', allowEmptyArchive: true
+            script {
+                // PR 工作区用完即清，避免 node_modules/dist 在 2 个执行器的磁盘上堆积
+                // 用 env.CHANGE_ID 判断：changeRequest() 在分支构建里也可能返回真值
+                if (env.CHANGE_ID) {
+                    cleanWs()
+                }
+            }
+        }
+        success {
+            script {
+                // main 通过后自动触发生产部署（GitHub Pages 只是 main 预览）
+                if (env.BRANCH_NAME == 'main') {
+                    echo 'main 构建通过，触发生产部署 MCTP-Deploy'
+                    build job: 'MCTP-Deploy', wait: false, parameters: [string(name: 'BRANCH', value: 'main')]
+                }
+            }
         }
         unsuccessful {
-            echo '构建未成功：请检查「代码检查」「依赖安全扫描」「构建项目」「Lighthouse 性能检测」阶段日志。'
+            echo '构建未成功：请检查「代码检查」「构建项目」「Lighthouse 性能检测」阶段日志。'
         }
     }
 }
