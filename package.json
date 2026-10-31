@@ -18,6 +18,8 @@
     "lint:check": "eslint . --ext .vue,.js,.jsx,.mjs"
   },
   "dependencies": {
+    "@fontsource/pixelify-sans": "^5.3.0",
+    "@fontsource/vt323": "^5.3.0",
     "axios": "^1.15.0",
     "gsap": "^3.15.0",
     "pinia": "^4.1.0",

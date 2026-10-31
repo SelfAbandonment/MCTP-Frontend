@@ -1,5 +1,8 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+// 原因：追加预览页路由（/preview），仅追加不删改现有路由；
+// 作用：previewRoutes 中 meta.chrome=false，使预览页不渲染全局 Header/Footer。
+import previewRoutes from '@/preview/router/previewRoutes'
 
 const DEFAULT_TITLE = 'MCTP · 方块社区'
 
@@ -75,6 +78,8 @@ const routes = [
     component: () => import('@/views/MicrosoftCallbackView.vue'),
     meta: { title: '正在登录 · MCTP' },
   },
+  // 原因：预览页路由必须放在 catch-all 之前，否则会被 :pathMatch(.*)* 拦截而无法访问。
+  ...previewRoutes,
   {
     path: '/:pathMatch(.*)*',
     component: () => import('@/views/RouteStatusView.vue'),
