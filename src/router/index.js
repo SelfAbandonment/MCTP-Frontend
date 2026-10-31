@@ -28,6 +28,11 @@ const routes = [
     meta: { requiresAuth: true, title: '玩家中心 · MCTP' },
   },
   {
+    path: '/points',
+    component: () => import('@/views/PointsView.vue'),
+    meta: { requiresAuth: true, title: '积分 · MCTP' },
+  },
+  {
     path: '/manage',
     redirect: '/manage/announcements',
   },
@@ -40,6 +45,11 @@ const routes = [
     path: '/manage/players',
     component: () => import('@/views/ManagePlayersView.vue'),
     meta: { requiresAuth: true, requiresStaff: true, title: '玩家管理 · MCTP' },
+  },
+  {
+    path: '/manage/points',
+    component: () => import('@/views/ManagePointsView.vue'),
+    meta: { requiresAuth: true, requiresStaff: true, title: '积分发放 · MCTP' },
   },
   {
     path: '/announcements',
