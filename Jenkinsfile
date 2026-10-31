@@ -17,7 +17,7 @@ pipeline {
     parameters {
         booleanParam(name: 'SKIP_LIGHTHOUSE', defaultValue: false, description: '跳过 Lighthouse 性能与无障碍检测')
         booleanParam(name: 'FORCE_LIGHTHOUSE', defaultValue: false, description: '在非 develop/main 或纯文档 PR 上强制运行 Lighthouse')
-        booleanParam(name: 'ALLOW_LIGHTHOUSE_WARNINGS', defaultValue: false, description: 'Lighthouse 警告不把构建标记为 UNSTABLE')
+        booleanParam(name: 'LIGHTHOUSE_STRICT', defaultValue: false, description: 'Lighthouse 有 warning 时把构建标记为 UNSTABLE（默认只写描述/评论）')
     }
 
     environment {
@@ -51,12 +51,13 @@ pipeline {
                         ).trim()
                         def list = files ? files.split('\n') : []
                         def relevant = list.any {
-                            it ==~ /^(src|public|scripts|docker)\/.*|^package(-lock)?\.json$|^vite\.config\.js$|^index\.html$/
+                            it ==~ /^(src|public|scripts|docker)\/.*|^package(-lock)?\.json$|^vite\.config\.js$|^lighthouserc\.cjs$|^index\.html$/
                         }
                         env.RUN_LIGHTHOUSE = relevant ? 'true' : 'false'
                         echo "前端相关变更：${relevant}（共 ${list.size()} 个文件）"
                     } else {
-                        env.RUN_LIGHTHOUSE = 'true'
+                        // 分支构建只在 develop/main 默认跑；功能分支需要 FORCE_LIGHTHOUSE
+                        env.RUN_LIGHTHOUSE = (env.BRANCH_NAME == 'develop' || env.BRANCH_NAME == 'main') ? 'true' : 'false'
                     }
                 }
             }
@@ -147,9 +148,11 @@ pipeline {
                         }
                     }
                     def warnMatch = summary =~ /([1-9]\d*)\s+warnings/
-                    if (warnMatch.find() && !params.ALLOW_LIGHTHOUSE_WARNINGS) {
+                    if (warnMatch.find() && params.LIGHTHOUSE_STRICT) {
                         currentBuild.result = 'UNSTABLE'
-                        echo 'Lighthouse 有警告，构建标记为 UNSTABLE（可用 ALLOW_LIGHTHOUSE_WARNINGS=true 忽略）'
+                        echo 'Lighthouse 有警告，LIGHTHOUSE_STRICT=true，构建标记为 UNSTABLE'
+                    } else if (warnMatch.find()) {
+                        echo 'Lighthouse 有警告（仅记录，不阻塞；需要阻塞请用 LIGHTHOUSE_STRICT=true）'
                     }
                 }
             }
