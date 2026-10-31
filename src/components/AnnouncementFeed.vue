@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { communityApi } from '@/api/community'
 import { usePagedResource } from '@/composables/usePagedResource'
 import { formatDate } from '@/utils/errors'
+import { ANNOUNCEMENT_CATEGORIES, announcementCategory, announcementQuery } from '@/utils/announcements'
 import PaginationControls from '@/components/PaginationControls.vue'
 
 defineProps({
@@ -10,18 +11,34 @@ defineProps({
   searchable: { type: Boolean, default: false },
 })
 
+const CATEGORY_FILTERS = [{ key: '', label: '全部' }, ...ANNOUNCEMENT_CATEGORIES]
+
 const search = ref('')
+const category = ref('')
 const { items, page, count, hasNext, hasPrevious, loading, error, load, retry } = usePagedResource(communityApi.announcements)
 
+function loadAnnouncements(nextPage = 1) {
+  return load(nextPage, announcementQuery({ search: search.value, category: category.value }))
+}
+
 function applySearch() {
-  const term = search.value.trim()
-  load(1, term ? { search: term } : {})
+  loadAnnouncements(1)
+}
+
+function selectCategory(key) {
+  if (category.value === key) return
+  category.value = key
+  loadAnnouncements(1)
 }
 
 function clearSearch() {
   if (!search.value) return
   search.value = ''
-  load(1, {})
+  loadAnnouncements(1)
+}
+
+function entryNumber(index) {
+  return String(index + 1).padStart(2, '0')
 }
 
 onMounted(() => load())
@@ -63,6 +80,24 @@ onMounted(() => load())
         清除
       </button>
     </form>
+    <div
+      v-if="searchable"
+      class="feed-filters"
+      role="group"
+      aria-label="按分类筛选公告"
+    >
+      <button
+        v-for="option in CATEGORY_FILTERS"
+        :key="option.key || 'all'"
+        class="feed-chip"
+        type="button"
+        :aria-pressed="category === option.key"
+        :disabled="loading"
+        @click="selectCategory(option.key)"
+      >
+        {{ option.label }}
+      </button>
+    </div>
     <p
       v-if="loading"
       class="feed-message"
@@ -95,11 +130,21 @@ onMounted(() => load())
         class="announcement-entry"
       >
         <summary>
-          <span class="announcement-index">0{{ index + 1 }}</span>
+          <span class="announcement-index">{{ entryNumber(index) }}</span>
           <span class="announcement-copy">
-            <time :datetime="item.published_at">{{ formatDate(item.published_at) }}</time>
+            <span class="announcement-tags">
+              <span class="tag">{{ announcementCategory(item).label }}</span>
+              <span
+                v-if="item.is_pinned"
+                class="tag tag-pin"
+              >置顶</span>
+              <time :datetime="item.published_at">{{ formatDate(item.published_at) }}</time>
+            </span>
             <strong>{{ item.title }}</strong>
-            <span v-if="item.summary">{{ item.summary }}</span>
+            <span
+              v-if="item.summary"
+              class="announcement-excerpt"
+            >{{ item.summary }}</span>
           </span>
           <span
             class="entry-plus"
@@ -143,6 +188,26 @@ onMounted(() => load())
 
 .feed-search .form-input { flex: 1; min-width: 0; }
 
+.feed-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 0 18px;
+  border-bottom: 1px solid var(--line);
+}
+.feed-chip {
+  min-height: 34px;
+  padding: 6px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: transparent;
+  font-size: 11px;
+  color: var(--text-soft);
+  transition: border-color 160ms, color 160ms, background 160ms;
+}
+.feed-chip:hover:not(:disabled) { border-color: var(--brand); color: var(--text-main); }
+.feed-chip[aria-pressed='true'] { border-color: var(--brand); background: #8ce06a14; color: var(--brand); }
+
 .feed-message { padding: 28px 0; font-size: 12px; color: var(--text-soft); }
 .announcement-entry { border-bottom: 1px solid var(--line); }
 .announcement-entry summary {
@@ -165,9 +230,14 @@ onMounted(() => load())
   color: var(--brand);
 }
 .announcement-copy { flex: 1; min-width: 0; }
-.announcement-copy time {
-  display: block;
+.announcement-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
   margin-bottom: 8px;
+}
+.announcement-tags time {
   font-family: var(--font-pixel);
   font-size: 9px;
   letter-spacing: 0.12em;
@@ -182,7 +252,7 @@ onMounted(() => load())
   line-height: 1.16;
   overflow-wrap: anywhere;
 }
-.announcement-copy > span { display: block; margin-top: 10px; font-size: 12px; color: var(--text-soft); overflow-wrap: anywhere; }
+.announcement-excerpt { display: block; margin-top: 10px; font-size: 12px; color: var(--text-soft); overflow-wrap: anywhere; }
 .entry-plus {
   font-size: 26px;
   font-weight: 300;

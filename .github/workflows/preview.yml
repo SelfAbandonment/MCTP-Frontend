@@ -1,0 +1,112 @@
+name: PR Preview Cleanup
+
+on:
+  pull_request:
+    types: [closed]
+  # 每周兜底：清理已关闭 PR 的预览目录，并在月初压缩 gh-pages 历史
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      force_compact:
+        description: 强制压缩 gh-pages 历史（用于验证/应急）
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  cleanup:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Remove preview from gh-pages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PREVIEW_DIR: preview/pr-${{ github.event.pull_request.number }}
+        run: |
+          set -e
+          git clone --depth 1 --branch gh-pages \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" pages
+          if [ -d "pages/${PREVIEW_DIR}" ]; then
+            rm -rf "pages/${PREVIEW_DIR}"
+            cd pages
+            git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -am "chore: 清理 PR #${PR_NUMBER} 预览"
+            git push
+            echo "已删除 ${PREVIEW_DIR}"
+          else
+            echo "预览目录不存在：${PREVIEW_DIR}"
+          fi
+
+      - name: Mark preview comment as cleaned
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -e
+          body=$(printf '<!-- mctp-preview -->\n### 预览已清理\n\n该 PR 已关闭，预览站点已删除。')
+          id=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments?per_page=100" \
+            --jq '.[] | select(.body | contains("<!-- mctp-preview -->")) | .id' | head -1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${id}" -f body="$body" >/dev/null
+          fi
+
+  prune:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Remove previews for closed PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          open=$(gh api "repos/${GITHUB_REPOSITORY}/pulls?state=open&per_page=100" --jq '.[].number')
+          git clone --depth 1 --branch gh-pages \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" pages
+          cd pages
+          changed=0
+          for dir in preview/pr-*; do
+            [ -d "$dir" ] || continue
+            number="${dir##*/pr-}"
+            if ! printf '%s\n' "$open" | grep -qx "$number"; then
+              rm -rf "$dir"
+              changed=1
+              echo "已删除 $dir"
+            fi
+          done
+          if [ "$changed" -eq 1 ]; then
+            git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -am "chore: 清理已关闭 PR 的预览"
+            git push
+          else
+            echo "没有需要清理的预览"
+          fi
+
+      - name: Compact gh-pages history on the first week of each month
+        working-directory: pages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FORCE_COMPACT: ${{ github.event.inputs.force_compact }}
+        run: |
+          set -e
+          if [ "${FORCE_COMPACT}" != "true" ] && [ "$(date +%-d)" -gt 7 ]; then
+            echo "非月初且未强制，跳过历史压缩"
+            exit 0
+          fi
+          git checkout --orphan "compact-$(date +%Y%m%d)"
+          git add -A
+          git -c user.name="github-actions[bot]" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "chore: 压缩 gh-pages 历史"
+          git push -f origin HEAD:gh-pages
+          echo "gh-pages 历史已压缩为单个提交"
