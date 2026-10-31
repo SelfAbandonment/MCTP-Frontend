@@ -43,7 +43,15 @@ pipeline {
                 }
                 stage('单元测试') {
                     steps {
-                        sh 'npm test'
+                        sh '''
+                            set +e
+                            npm test -- --test-reporter=junit --test-reporter-destination=junit.xml
+                            status=$?
+                            if [ -f junit.xml ]; then
+                                node scripts/junit-normalize.mjs junit.xml
+                            fi
+                            exit $status
+                        '''
                     }
                 }
             }
@@ -103,12 +111,19 @@ pipeline {
                         "$IMAGE" \
                         lhci autorun --config=./lighthouserc.cjs
                 '''
+                script {
+                    // 把断言摘要写进构建描述，失败/警告不用翻日志就能看到
+                    def summary = sh(script: 'node scripts/lighthouse-summary.mjs', returnStdout: true).trim()
+                    currentBuild.description = summary
+                    echo summary
+                }
             }
         }
     }
 
     post {
         always {
+            junit allowEmptyResults: true, testResults: 'junit.xml'
             // 只归档入口与静态资源，避免每个分支任务囤积十几 MB 的视频产物
             archiveArtifacts artifacts: 'dist/index.html,dist/assets/**', allowEmptyArchive: true
             // Lighthouse 的 JSON/HTML 报告，便于回溯评分明细
