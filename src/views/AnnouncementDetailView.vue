@@ -3,6 +3,7 @@ import { onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { communityApi } from '@/api/community'
 import { isNotFound, errorMessage, formatDay } from '@/utils/errors'
+import { announcementCategory } from '@/utils/announcements'
 
 const route = useRoute()
 const announcement = ref(null)
@@ -102,7 +103,11 @@ onUnmounted(() => {
     >
       <header class="announcement-head">
         <p class="eyebrow">
-          社区公告
+          {{ announcementCategory(announcement).label }}
+          <span
+            v-if="announcement.is_pinned"
+            class="announcement-pin"
+          >· 置顶</span>
         </p>
         <h1>{{ announcement.title }}</h1>
         <dl class="announcement-meta">
@@ -185,6 +190,8 @@ onUnmounted(() => {
   line-height: 1.06;
   overflow-wrap: anywhere;
 }
+
+.announcement-pin { color: var(--accent); }
 
 .announcement-meta {
   display: flex;

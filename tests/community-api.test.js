@@ -52,6 +52,13 @@ test('public announcement list forwards search and page', async () => {
   assert.equal(calls[0].url, '/api/v1/announcements/')
 })
 
+test('public announcement list forwards the category filter', async () => {
+  const calls = capture()
+  await communityApi.announcements({ category: 'event' })
+  assert.deepEqual(calls[0].params, { category: 'event' })
+  assert.equal(calls[0].authorization, null)
+})
+
 test('overview uses the authenticated endpoint', async () => {
   const calls = capture()
   await communityApi.overview()
