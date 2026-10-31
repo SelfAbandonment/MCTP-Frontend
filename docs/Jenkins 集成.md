@@ -48,6 +48,8 @@ GitHub Branch Source 会为每个分支和 PR 自动回写两个 status：`conti
 
 - Lighthouse 镜像 `mctp/lighthouse-ci:0.15.1` 首次构建 1–2 分钟，之后命中层缓存
 - Lighthouse 只在 `develop`/`main` 运行；PR 构建默认跳过（太慢），需要时用 `FORCE_LIGHTHOUSE` 手动触发
+- Lighthouse 断言摘要（警告/错误数量与超标的 audit）写入构建描述，打开构建页即可看到
+- 单测通过 `--test-reporter=junit` 产出 `junit.xml`，`scripts/junit-normalize.mjs` 补上 Jenkins 需要的 `<testsuite>` 包裹，再由 `junit` 发布器保留测试趋势与失败用例
 - 产物归档：`dist/index.html`、`dist/assets/**`、`.lighthouseci/**`（不再归档十几 MB 的 `dist/media/**`）
 - 每个分支保留 20 条构建、3 份产物；新构建会中止同分支进行中的旧构建
 - PR 构建结束后自动 `cleanWs()`，避免 `node_modules`/`dist` 占满执行器磁盘
