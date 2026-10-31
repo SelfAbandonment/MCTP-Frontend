@@ -43,20 +43,28 @@ GitHub Branch Source 会为每个分支和 PR 自动回写两个 status：`conti
 |---|---|---|
 | `SKIP_LIGHTHOUSE` | false | 跳过性能/无障碍检测 |
 | `FORCE_LIGHTHOUSE` | false | 在非 PR 的功能分支上强制运行 Lighthouse（PR 与 `develop`/`main` 默认都会跑） |
+| `ALLOW_LIGHTHOUSE_WARNINGS` | false | Lighthouse 有 warning 时不把构建标记为 UNSTABLE |
 
 ## 缓存与产物
 
 - Lighthouse 镜像 `mctp/lighthouse-ci:0.15.1` 首次构建 1–2 分钟，之后命中层缓存
 - Lighthouse 在 `develop`/`main`，以及包含 `src/**`、`public/**`、依赖/构建配置变更的 PR 上运行；纯文档 PR 自动跳过
-- 评分与断言摘要写入构建描述；PR 构建还会在 PR 上新增/更新一条 **CI 汇总评论**（Lighthouse + 测试通过数 + 覆盖率 + Jenkins 构建链接，`scripts/pr-comment.mjs`，带 HTML 标记，重复构建只更新不刷屏）
-- 单测通过 `--test-reporter=junit` 产出 `junit.xml`，`scripts/junit-normalize.mjs` 补上 Jenkins 需要的 `<testsuite>` 包裹，再由 `junit` 发布器保留测试趋势与失败用例
+- 评分与断言摘要写入构建描述；PR 上新增/更新 **Lighthouse 评论**（`<!-- mctp-lighthouse -->`，`scripts/pr-comment.mjs` 的 `REPORT_KIND=lighthouse` 模式）
+- Lighthouse 有 warning 时构建标记为 **UNSTABLE**；`ALLOW_LIGHTHOUSE_WARNINGS=true` 可保持绿色
+- 测试/覆盖率与 CI 汇总评论由 GitHub Actions 负责（见下方分工），Jenkins 不再跑 ESLint/单测
 - 产物归档：`dist/index.html`、`dist/assets/**`、`.lighthouseci/**`（不再归档十几 MB 的 `dist/media/**`）
 - 每个分支保留 10 条构建、2 份产物；新构建会中止同分支进行中的旧构建
 - PR 构建结束后自动 `cleanWs()`，避免 `node_modules`/`dist` 占满执行器磁盘
 - `npm audit` 已移到 `MCTP-FE-Dependency` 每周巡检，主流水线不再因依赖告警变红；巡检任务同时用 `uv export` + `pip-audit` 审计后端依赖
-- 覆盖率：单测额外跑一次 `node --test --experimental-test-coverage`，`scripts/coverage-gate.mjs` 校验行覆盖率下限 **70%**（低于阈值构建失败）
+- 覆盖率由 GitHub Actions 的 `test` job 执行（`scripts/coverage-gate.mjs`，下限 **70%**，低于阈值必需检查失败）
 - checkout 使用 `skipDefaultCheckout` + 显式 `checkout scm`（`retry(2)`）；PR 构建先 `deleteDir()`，避免旧工作区造成空目录
 - Node 版本统一为 **24**（Jenkins `Nodejs24`、GitHub Actions、`engines >=24`、`.nvmrc`）
+
+## 与 GitHub Actions 的分工
+
+- **GitHub Actions（分支保护必需检查）**：`lint`、`test`（JUnit + 覆盖率门禁 70%）、`build`；PR 上回写 CI 汇总评论（测试/覆盖率）；PR 预览复用 `build` 的 `dist` artifact 部署；`main` 部署 Pages。
+- **Jenkins**：FE 只做 `build + Lighthouse`（评论 `<!-- mctp-lighthouse -->`），`main` 通过后触发 `MCTP-Deploy`；不再重复 ESLint/单测/覆盖率。
+- 契约检查由 API 的 Jenkins 负责；预览与源站共用一份 `dist`（`vite base` 改为相对路径），gh-pages 每月初自动压缩历史。
 
 ## 依赖巡检 Issue
 

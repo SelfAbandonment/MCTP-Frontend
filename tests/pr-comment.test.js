@@ -2,10 +2,24 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   buildComment,
+  buildLighthouseComment,
+  LIGHTHOUSE_MARKER,
   MARKER,
   parseCoverage,
   parseJunit,
 } from '../scripts/pr-comment.mjs'
+
+test('buildLighthouseComment only carries the Lighthouse section', () => {
+  const body = buildLighthouseComment({
+    lighthouse: 'Lighthouse 性能 85 · 无障碍 96；1 warnings, 0 errors',
+    buildUrl: 'http://jenkins/job/MCTP-FE/job/PR-1/1/',
+  })
+  assert.ok(body.startsWith(LIGHTHOUSE_MARKER))
+  assert.match(body, /### Lighthouse 结果/)
+  assert.match(body, /性能 85/)
+  assert.equal(body.includes('mctp-ci-report'), false)
+  assert.match(body, /\[查看 Jenkins 构建\]/)
+})
 
 test('parseJunit counts tests, failures and skipped cases', () => {
   const xml = `<testsuite tests="3"><testcase name="a"/><testcase name="b"><failure/></testcase><testcase name="c"><skipped/></testcase></testsuite>`

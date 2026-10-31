@@ -16,7 +16,8 @@ pipeline {
 
     parameters {
         booleanParam(name: 'SKIP_LIGHTHOUSE', defaultValue: false, description: '跳过 Lighthouse 性能与无障碍检测')
-        booleanParam(name: 'FORCE_LIGHTHOUSE', defaultValue: false, description: '在非 develop/main 构建（含 PR）中强制运行 Lighthouse')
+        booleanParam(name: 'FORCE_LIGHTHOUSE', defaultValue: false, description: '在非 develop/main 或纯文档 PR 上强制运行 Lighthouse')
+        booleanParam(name: 'ALLOW_LIGHTHOUSE_WARNINGS', defaultValue: false, description: 'Lighthouse 警告不把构建标记为 UNSTABLE')
     }
 
     environment {
@@ -50,43 +51,14 @@ pipeline {
             }
         }
 
-        stage('代码检查') {
-            parallel {
-                stage('ESLint') {
-                    steps {
-                        sh 'npm run lint:check'
-                    }
-                }
-                stage('单元测试') {
-                    steps {
-                        sh '''
-                            set +e
-                            npm test -- --test-reporter=junit --test-reporter-destination=junit.xml
-                            status=$?
-                            if [ -f junit.xml ]; then
-                                node scripts/junit-normalize.mjs junit.xml
-                            fi
-                            rm -f coverage.txt
-                            node --test --experimental-test-coverage > coverage.txt 2>&1 || true
-                            if [ "$status" -ne 0 ]; then
-                                exit "$status"
-                            fi
-                            node scripts/coverage-gate.mjs coverage.txt 70
-                        '''
-                    }
-                }
-            }
-        }
-
-        // npm audit 已移到 MCTP-FE-Dependency 每周巡检，主流水线只做构建门禁
         stage('构建项目') {
             steps {
-                sh 'NODE_ENV=production npm run build -- --base=/'
+                sh 'NODE_ENV=production npm run build'
             }
         }
 
         stage('Lighthouse 性能检测') {
-            // develop/main 与 PR 都跑；PR 结果会回写评论，SKIP_LIGHTHOUSE 可跳过。
+            // 只在 develop/main、或 PR 改动涉及前端代码/配置时运行；纯文档 PR 跳过。
             when {
                 allOf {
                     expression { !params.SKIP_LIGHTHOUSE }
@@ -111,6 +83,10 @@ pipeline {
                 }
             }
             steps {
+                // 注意：Docker Hub 上的 kanti/lighthouse-ci 并不是 GoogleChrome/lighthouse-ci
+                // （那是 2019 年另一个同名项目，CLI 叫 lighthouse-ci），镜像里没有 lhci 命令。
+                // 这里用 docker/lighthouse-ci.Dockerfile 自建镜像（Chromium + @lhci/cli），
+                // 首次构建约 1-2 分钟，之后命中层缓存。
                 sh '''
                     set -e
                     IMAGE=mctp/lighthouse-ci:0.15.1
@@ -140,41 +116,41 @@ pipeline {
                         "$IMAGE" \
                         lhci autorun --config=./lighthouserc.cjs
                 '''
+                script {
+                    def summary = sh(
+                        script: 'node scripts/lighthouse-summary.mjs 2>/dev/null || true',
+                        returnStdout: true
+                    ).trim()
+                    if (summary) {
+                        currentBuild.description = summary
+                        echo summary
+                    }
+                    if (env.CHANGE_ID) {
+                        withCredentials([usernamePassword(credentialsId: 'github-MCTP', usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+                            withEnv([
+                                "REPORT_KIND=lighthouse",
+                                "LH_SUMMARY=${summary}",
+                                "PR_NUMBER=${env.CHANGE_ID}",
+                                "GH_REPO=SelfAbandonment/MCTP-Frontend"
+                            ]) {
+                                sh 'node scripts/pr-comment.mjs'
+                            }
+                        }
+                    }
+                    def warnMatch = summary =~ /([1-9]\d*)\s+warnings/
+                    if (warnMatch.find() && !params.ALLOW_LIGHTHOUSE_WARNINGS) {
+                        currentBuild.result = 'UNSTABLE'
+                        echo 'Lighthouse 有警告，构建标记为 UNSTABLE（可用 ALLOW_LIGHTHOUSE_WARNINGS=true 忽略）'
+                    }
+                }
             }
         }
     }
 
     post {
         always {
-            junit allowEmptyResults: true, testResults: 'junit.xml'
-            // 只归档入口与静态资源，避免每个分支任务囤积十几 MB 的视频产物
             archiveArtifacts artifacts: 'dist/index.html,dist/assets/**', allowEmptyArchive: true
-            // Lighthouse 的 JSON/HTML 报告，便于回溯评分明细
             archiveArtifacts artifacts: '.lighthouseci/**', allowEmptyArchive: true
-            // Node 原生覆盖率报告，先只留档不设阈值
-            archiveArtifacts artifacts: 'coverage.txt', allowEmptyArchive: true
-            script {
-                // 汇总构建描述，并在 PR 上回写一条 CI 评论（Lighthouse/测试/覆盖率）
-                def summary = sh(
-                    script: 'node scripts/lighthouse-summary.mjs 2>/dev/null || true',
-                    returnStdout: true
-                ).trim()
-                if (summary) {
-                    currentBuild.description = summary
-                    echo summary
-                }
-                if (env.CHANGE_ID) {
-                    withCredentials([usernamePassword(credentialsId: 'github-MCTP', usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
-                        withEnv([
-                            "LH_SUMMARY=${summary}",
-                            "PR_NUMBER=${env.CHANGE_ID}",
-                            "GH_REPO=SelfAbandonment/MCTP-Frontend"
-                        ]) {
-                            sh 'node scripts/pr-comment.mjs'
-                        }
-                    }
-                }
-            }
             script {
                 // PR 工作区用完即清，避免 node_modules/dist 在 2 个执行器的磁盘上堆积
                 // 用 env.CHANGE_ID 判断：changeRequest() 在分支构建里也可能返回真值
@@ -193,7 +169,7 @@ pipeline {
             }
         }
         unsuccessful {
-            echo '构建未成功：请检查「代码检查」「构建项目」「Lighthouse 性能检测」阶段日志。'
+            echo '构建未成功：请检查「构建项目」「Lighthouse 性能检测」阶段日志；单元测试/覆盖率/PR 评论由 GitHub Actions 负责。'
         }
     }
 }

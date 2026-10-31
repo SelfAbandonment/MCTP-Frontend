@@ -4,7 +4,8 @@ import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [vue()],
-  base: '/MCTP-Frontend/',
+  // 相对 base：同一份 dist 既能部署到 /MCTP-Frontend/，也能部署到 /MCTP-Frontend/preview/pr-N/
+  base: './',
   server: {
     watch: {
       // The agent file tool writes through temp files; Windows watchers can

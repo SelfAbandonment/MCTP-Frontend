@@ -20,8 +20,8 @@
 
 ## CI 与 Jenkins
 
-- GitHub Actions：`ci.yml`（PR 跑 lint + test + build）、`preview.yml`（PR 部署 `preview/pr-<n>/` 并回写评论）、`deploy.yml`（push `main` 部署 Pages 预览）。
-- Jenkins：`Jenkinsfile`（仓库根）对应多分支任务，develop/main/PR 都跑；Lighthouse 在 `develop`/`main` 与 PR 上运行，结果写入构建描述并回写 PR 评论，`main` 通过后自动触发 `MCTP-Deploy`。
+- GitHub Actions（必需检查）：`ci.yml` 跑 lint + test（JUnit/覆盖率门禁 70%）+ build，PR 上回写 CI 汇总评论并复用 `dist` 部署 `preview/pr-<n>/`；`preview.yml` 负责关闭清理与月初压缩 gh-pages；`deploy.yml` 部署 Pages 预览。
+- Jenkins：`Jenkinsfile` 只做 build + Lighthouse（警告默认标记 UNSTABLE，可用 `ALLOW_LIGHTHOUSE_WARNINGS` 忽略），PR 回写 Lighthouse 评论，`main` 通过后自动触发 `MCTP-Deploy`；不再重复 lint/单测。
 - 本地等价命令：`npm run lint:check`、`npm test`、`npm run build`。
 - Node 版本以 24 为准（Jenkins `Nodejs24` 与 GitHub Actions 统一；`engines` 为 `>=24`，`npm` 为 `>=11`）。
 

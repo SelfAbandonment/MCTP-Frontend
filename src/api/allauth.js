@@ -61,7 +61,7 @@ async function request(path, { method = 'GET', data } = {}) {
 }
 
 export function callbackUrl() {
-  const base = new URL(import.meta.env.BASE_URL, window.location.origin).href
+  const base = new URL(import.meta.env.BASE_URL, window.location.href).href
   return `${base}#/auth/microsoft/callback`
 }
 
