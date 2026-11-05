@@ -68,7 +68,8 @@ HTTP 请求有连接/总超时，不自动重试部署 POST，以免重复入队
 
 ## 通知与仓库配置检查
 
-- CI 失败请求 `MCTP-Notify` 并包含失败 job、commit、`ACTOR`（PR 作者或触发 push/手动运行的 GitHub 用户）；同分支此前失败后的首次成功发送 `fixed` 恢复通知，不对每次成功构建发消息。查询历史 run 需要通知 job 的 `actions: read` 权限。Jenkins 任务需声明 `ACTOR` 参数并转成 webhook 的 `actor` 字段，插件才能按作者 @ QQ。
+- `main`/`develop` push 的 CI 成功、失败都会请求 `MCTP-Notify`；同 ref 只保留最新 run 的通知。PR 与手动运行保留失败/恢复通知，不广播每次成功。通知包含失败 job、commit、`ACTOR`（PR 作者或 push/手动运行触发者）；查询历史 run 需要通知 job 的 `actions: read` 权限。Jenkins 任务需声明 `ACTOR` 参数并转成 webhook 的 `actor` 字段，插件才能按作者 @ QQ。
+- 当前 release workflow 只确认 `MCTP-Deploy` 已接收请求，不代表部署已开始或完成。实际部署开始/成功/失败/回滚需由活动 `MCTP-Deploy` 任务的 post actions 调用 `MCTP-Notify`，传 `EVENT=deploy` 和真实结果；回滚状态必须由部署任务明确提供，不能从 HTTP 接收成功推断。本仓库不包含该活动 Jenkins 任务配置。
 - 通知失败显示 warning 和步骤日志，不用 `|| true` 静默吞掉，不改变原 CI 失败结论。
 - PR 评论回写失败同样显示 warning，但不阻断 CI；fork PR 不写评论或发机器人通知，这是避免在执行不可信 PR 代码时授予写权限/Secrets 的限制。
 - Jenkins 的 AstrBot 凭证只在 Jenkins 管理，不写入 GitHub 构建产物或仓库。

@@ -258,6 +258,7 @@ jobs:
           done
           status=failure
           title="MCTP-FE CI 失败"
+          notification_details="失败检查: $failed_jobs"
           if [ -z "$failed_jobs" ]; then
             required_jobs="lint:${{ needs.lint.result }} test:${{ needs.test.result }} build:${{ needs.build.result }} lighthouse:${{ needs.lighthouse.result }}"
             if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
@@ -279,23 +280,37 @@ jobs:
               -f "branch=$BRANCH" -f "event=$GITHUB_EVENT_NAME" -f per_page=100 |
               jq -r --argjson current "$GITHUB_RUN_ID" \
                 '[.workflow_runs[] | select(.id < $current and .status == "completed" and (.conclusion == "success" or .conclusion == "failure"))] | max_by(.id).conclusion // ""')
-            if [ "$previous" != "failure" ]; then
-              echo "未发现同分支此前失败的 CI，跳过成功通知"
+            if [ "$previous" = "failure" ]; then
+              status=fixed
+              title="MCTP-FE CI 已恢复"
+              notification_details="此前失败的 CI 检查已通过"
+            elif [ "$GITHUB_EVENT_NAME" = "push" ] &&
+                 { [ "$BRANCH" = "main" ] || [ "$BRANCH" = "develop" ]; }; then
+              status=success
+              title="MCTP-FE CI 通过"
+              notification_details="所有必需检查通过"
+            else
+              echo "此事件无需发送成功通知"
               exit 0
             fi
-            status=fixed
-            title="MCTP-FE CI 已恢复"
-            failed_jobs="此前失败的 CI 检查已通过"
+          fi
+          latest_run=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs" \
+            -f "branch=$BRANCH" -f "event=$GITHUB_EVENT_NAME" -f per_page=1 \
+            --jq '.workflow_runs[0].id // empty')
+          if [ "$latest_run" != "$GITHUB_RUN_ID" ]; then
+            echo "::notice::A newer run exists for $BRANCH; skipping stale notification"
+            exit 0
           fi
           if [ -z "$JENKINS_URL" ] || [ -z "$JENKINS_USER" ] || [ -z "$JENKINS_TOKEN" ]; then
             echo "::error::Jenkins notification secrets are not configured"
             exit 1
           fi
           BASE="${JENKINS_URL%/}"
-          DETAILS="${failed_jobs}; commit ${GITHUB_SHA:0:7}"
+          DETAILS="${notification_details}; commit ${GITHUB_SHA:0:7}"
           curl -fsS --connect-timeout 10 --max-time 30 -u "$JENKINS_USER:$JENKINS_TOKEN" \
             -X POST "$BASE/job/MCTP-Notify/buildWithParameters" \
             --data-urlencode "REPO=MCTP-FE" \
+            --data-urlencode "EVENT=ci" \
             --data-urlencode "STATUS=$status" \
             --data-urlencode "TITLE=$title" \
             --data-urlencode "BRANCH=$BRANCH" \
