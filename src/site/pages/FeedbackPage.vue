@@ -8,6 +8,8 @@
  * 提交后：右页连同封底向左翻过来，把书合上 → 合上的书缩小、变成"书与笔"物品图标 →
  *         下方出现像素字"感谢您的反馈，我们将在7个兰猫日给您反馈"。
  * 手机竖屏两页上下排列，提交时改为整本书压扁收起，再变成物品图标。
+ * 背景：《我的世界》风格的像素图书馆（书架墙、橡木地板、暖光和飘浮的附魔符文，
+ *   见 components/feedback/LibraryBackdrop.vue），"未开放"提示和书本都放在图书馆里。
  * 后端接口尚未实现，当前禁用提交；接口建议见 services/feedback.js。
  */
 import { computed, nextTick, onBeforeUnmount, reactive, ref } from 'vue'
@@ -15,6 +17,7 @@ import gsap from 'gsap'
 import PixelText from '../components/PixelText.vue'
 import BookQuillIcon from '../components/feedback/BookQuillIcon.vue'
 import CreatePanel from '../components/home/CreatePanel.vue'
+import LibraryBackdrop from '../components/feedback/LibraryBackdrop.vue'
 import { FOOTER_GROUPS } from '../content/footer'
 import { account } from '../services/account'
 import {
@@ -136,6 +139,7 @@ onBeforeUnmount(() => form.shots.forEach((s) => URL.revokeObjectURL(s.url)))
 
 <template>
   <main class="site-page feedback-page">
+    <LibraryBackdrop />
     <h1>
       <PixelText
         text="意见反馈"
@@ -388,23 +392,28 @@ onBeforeUnmount(() => form.shots.forEach((s) => URL.revokeObjectURL(s.url)))
   text-align: center;
 }
 .feedback-page {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
 }
-.feedback-page > h1 { width: min(720px, 100%); }
-.unavailable { width: min(720px, 100%); }
-.unavailable-content { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; padding: clamp(24px, 4vw, 40px); font-family: var(--font-body); line-height: 1.8; }
+/* 图书馆背景是 fixed 铺满全屏的，页面内容都要压在它上面 */
+.feedback-page > :not(.library) { position: relative; z-index: 1; }
+/* 标题和下面的面板左对齐：在线反馈未开放时对齐提示面板，开放后对齐书本 */
+.feedback-page > h1 { width: min(820px, 100%); }
+.feedback-page > h1:has(~ .book) { width: min(1320px, 100%); }
+.unavailable { width: min(820px, 100%); }
+.unavailable-content { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; padding: clamp(24px, 4vw, 48px); font-family: var(--font-body); font-size: 17px; line-height: 1.8; }
 .unavailable-content p { margin: 0; color: #d1d1d6; }
 /* 书：棕色皮质封面衬在两页下面 */
 .book {
   position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  width: min(1040px, 100%);
-  min-height: 560px;
-  padding: 14px;
+  width: min(1320px, 100%);
+  min-height: clamp(600px, calc(100dvh - 200px), 820px);
+  padding: 16px;
   background: linear-gradient(180deg, #8a5a2b, #6b4220);
   box-shadow: 0 0 0 3px var(--outline), inset 3px 3px 0 #a87442, inset -3px -3px 0 #4a2c12, 0 24px 48px rgba(0, 0, 0, 0.55);
   perspective: 2200px;
@@ -414,8 +423,8 @@ onBeforeUnmount(() => form.shots.forEach((s) => URL.revokeObjectURL(s.url)))
 .page {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 28px clamp(18px, 3vw, 36px);
+  gap: 22px;
+  padding: 36px clamp(20px, 3.5vw, 48px);
   background: linear-gradient(90deg, #efe2bd, var(--paper) 12%, var(--paper) 88%, #e4d4a8);
   color: var(--ink);
   box-shadow: 0 0 0 2px var(--outline);
@@ -455,7 +464,7 @@ onBeforeUnmount(() => form.shots.forEach((s) => URL.revokeObjectURL(s.url)))
 .ink { color: var(--ink); }
 .sub {
   margin: -6px 0 0;
-  font-size: 13px;
+  font-size: 15px;
   color: #7a6040;
 }
 .field {
@@ -465,7 +474,7 @@ onBeforeUnmount(() => form.shots.forEach((s) => URL.revokeObjectURL(s.url)))
 }
 .field.grow { flex: 1; }
 .lbl {
-  font-size: 14px;
+  font-size: 16px;
   color: #5a4126;
 }
 .lbl em { color: #b02e26; font-style: normal; }
@@ -484,12 +493,12 @@ onBeforeUnmount(() => form.shots.forEach((s) => URL.revokeObjectURL(s.url)))
   gap: 8px;
 }
 .cat {
-  padding: 6px 14px;
+  padding: 8px 18px;
   border: 0;
   background: #e2d2a6;
   color: var(--ink);
   font-family: var(--font-ui);
-  font-size: 14px;
+  font-size: 16px;
   cursor: pointer;
   box-shadow: 0 0 0 2px #8a6a3e, inset -2px -2px 0 #c9b27e;
 }
@@ -506,7 +515,7 @@ onBeforeUnmount(() => form.shots.forEach((s) => URL.revokeObjectURL(s.url)))
   background: rgba(255, 255, 255, 0.35);
   color: var(--ink);
   font-family: var(--font-ui);
-  font-size: 15px;
+  font-size: 17px;
   outline: none;
 }
 .paper-input:focus { border-bottom-color: var(--brass-lo); background: rgba(255, 255, 255, 0.55); }
@@ -517,8 +526,8 @@ onBeforeUnmount(() => form.shots.forEach((s) => URL.revokeObjectURL(s.url)))
 }
 .shot {
   position: relative;
-  width: 84px;
-  height: 64px;
+  width: 108px;
+  height: 80px;
   background: #e2d2a6;
   box-shadow: 0 0 0 2px #8a6a3e;
 }
@@ -554,16 +563,16 @@ onBeforeUnmount(() => form.shots.forEach((s) => URL.revokeObjectURL(s.url)))
 /* 横线信纸 */
 .lined {
   flex: 1;
-  min-height: 300px;
+  min-height: 360px;
   padding: 4px 6px;
   border: 0;
   resize: none;
-  background: repeating-linear-gradient(180deg, transparent 0 27px, rgba(138, 106, 62, 0.35) 27px 28px);
+  background: repeating-linear-gradient(180deg, transparent 0 31px, rgba(138, 106, 62, 0.35) 31px 32px);
   background-attachment: local;
   color: var(--ink);
   font-family: var(--font-ui);
-  font-size: 16px;
-  line-height: 28px;
+  font-size: 18px;
+  line-height: 32px;
   outline: none;
 }
 .sign {
@@ -571,7 +580,7 @@ onBeforeUnmount(() => form.shots.forEach((s) => URL.revokeObjectURL(s.url)))
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  font-size: 13px;
+  font-size: 15px;
   color: #7a6040;
 }
 .done {
