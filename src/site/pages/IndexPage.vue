@@ -80,10 +80,18 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="index-page">
-    <canvas ref="canvasRef" class="stage" aria-hidden="true" />
+    <canvas
+      ref="canvasRef"
+      class="stage"
+      aria-hidden="true"
+    />
 
     <div class="viewport">
-      <div ref="trackRef" class="track" :style="{ height: `${SECTIONS.length * 100}%` }">
+      <div
+        ref="trackRef"
+        class="track"
+        :style="{ height: `${SECTIONS.length * 100}%` }"
+      >
         <section
           v-for="(s, i) in SECTIONS"
           :key="s.key"
@@ -93,30 +101,79 @@ onBeforeUnmount(() => {
           :style="{ height: `${100 / SECTIONS.length}%` }"
         >
           <div class="copy">
-            <p class="kicker" data-reveal>{{ s.kicker }}</p>
-            <h2 class="title" data-reveal>
-              <PixelText :text="s.title" :px="i === 0 ? 5 : 4" />
+            <p
+              class="kicker"
+              data-reveal
+            >
+              {{ s.kicker }}
+            </p>
+            <h2
+              class="title"
+              data-reveal
+            >
+              <PixelText
+                :text="s.title"
+                :px="i === 0 ? 5 : 4"
+              />
             </h2>
-            <p class="body" data-reveal>{{ s.body }}</p>
-            <p v-if="s.note" class="note" data-reveal>{{ s.note }}</p>
-            <router-link v-if="s.key === 'enter'" to="/home" class="cta" data-reveal>
-              <PixelText text="前往主页面 →" :px="2" />
+            <p
+              class="body"
+              data-reveal
+            >
+              {{ s.body }}
+            </p>
+            <p
+              v-if="s.note"
+              class="note"
+              data-reveal
+            >
+              {{ s.note }}
+            </p>
+            <router-link
+              v-if="s.key === 'enter'"
+              to="/home"
+              class="cta"
+              data-reveal
+            >
+              <PixelText
+                text="前往主页面 →"
+                :px="2"
+              />
             </router-link>
           </div>
           <!-- 最后一段底部：精简页脚（协议条款 / 反馈 + 非官方声明） -->
-          <SiteFooter v-if="s.key === 'enter'" compact class="index-footer" />
+          <SiteFooter
+            v-if="s.key === 'enter'"
+            compact
+            class="index-footer"
+          />
         </section>
       </div>
     </div>
 
     <!-- 右侧分段指示点，可直接点击跳段 -->
-    <ol class="dots" aria-label="分段导航">
-      <li v-for="(s, i) in SECTIONS" :key="s.key">
-        <button :class="{ active: index === i }" :aria-label="`第 ${i + 1} 段：${s.title}`" @click="goTo(i)" />
+    <ol
+      class="dots"
+      aria-label="分段导航"
+    >
+      <li
+        v-for="(s, i) in SECTIONS"
+        :key="s.key"
+      >
+        <button
+          :class="{ active: index === i }"
+          :aria-label="`第 ${i + 1} 段：${s.title}`"
+          @click="goTo(i)"
+        />
       </li>
     </ol>
 
-    <p class="hint" :class="{ gone: index > 0 }">滚动 / 拖拽 / 滑动 ↓</p>
+    <p
+      class="hint"
+      :class="{ gone: index > 0 }"
+    >
+      滚动 / 拖拽 / 滑动 ↓
+    </p>
   </div>
 </template>
 

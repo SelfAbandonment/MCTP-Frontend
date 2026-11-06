@@ -25,6 +25,7 @@ Jenkins 不再运行前后端 CI；旧 `MCTP-FE`、`MCTP-API-CI` 多分支任务
 - 单测输出 JUnit 和原生 Node 覆盖率；测试失败后仍规范化已有 JUnit 并检查覆盖率。
 - 行覆盖率下限 **70%**。测试失败和覆盖率失败都会让 `test` job 失败。
 - 测试报告保留 14 天；`dist` 保留 7 天，供预览复用，不重复安装/构建。
+- Showcase 已并入根应用 `src/site/`，统一执行根目录 lint、test、build；删除独立 `showcase` job 与 `showcase-dist`，同仓与 fork 预览均只部署 `dist`。现有必需检查名称不变。
 - 同仓 PR 回写 CI 评论，实际通过数为总数减失败数和跳过数；按 GitHub 分页查找并清理重复标记评论。fork 无写权限时不尝试回写。
 - Lighthouse 保持 **advisory**：断言失败不阻塞合并，但显示 workflow warning 和汇总。必需 job 成功不代表性能断言通过；如需硬门禁，应单独确认后移除 `continue-on-error`。
 - [lighthouserc.cjs](../lighthouserc.cjs) 的 LCP 4000ms、CLS 0.1、无障碍 0.9 等阈值不变。

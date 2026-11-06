@@ -9,7 +9,11 @@
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="License" />
 </p>
 
-MCTP / 方块社区前端，基于 Vue 3 + Vite 构建：Minecraft 主题的电影感社区官网、玩家中心和独立管理区。
+MCTP / 方块社区前端，基于 Vue 3 + Vite 构建。原 Showcase 已迁入主应用：`/` 是像素加载与 3D 索引页，`/home` 是账号、运势、公告和功能主页面；玩家中心、积分与管理区保留真实 API。
+
+从仓库根目录运行 `npm run dev`，访问 `http://localhost:5173/#/home`；不再需要单独启动或构建 `showcase/`。所有路由使用 hash，适用于 Pages 和 PR 子目录预览。
+
+迁移前的 `develop` 已备份到远端 `backup/develop-before-showcase-20261106`（`acca6b0`）。详细界面和接口说明见 [新版站点重建说明](docs/site-rebuild-notes.md)。
 
 ## 在线访问
 
@@ -22,17 +26,18 @@ MCTP / 方块社区前端，基于 Vue 3 + Vite 构建：Minecraft 主题的电�
 
 ## 功能
 
-- 电影感首页：全屏 Minecraft 光影影像 + 滚动驱动的 clip-path 镜头框 + 四个可切换世界画面（湖畔 / 原野 / 远山 / 月夜）
-- 滚动叙事：GSAP + ScrollTrigger 驱动——Hero 收帧、About 图窗从圆角小窗钉住展开为全屏、Features Bento 网格（静态大图、3D 倾斜、径向 hover）、Story 多边形裁切大图 + 视差、Contact 夹缝图片
-- 全站中文：页面可见文案不出现英文（品牌 MCTP 除外），首页中文克制、以画面为主
+- 索引页：像素银河加载页、黄铜标题、M/A 转场、three.js 方块小岛与齿轮分段镜头
+- 主页面：真实账号资料、按 UID 和本地日期计算的娱乐运势、真实已发布公告和功能入口
+- 公告板读取 `GET /api/v1/announcements/`，点击进入真实公告详情；编辑入口转到既有管理区
+- 评论、反馈后端接口尚未实现，明确显示未开放；反馈禁止提交，不保存本地模拟数据或显示虚假成功
 - 玩家中心：注册登录、邮箱编辑、修改密码、Microsoft / Minecraft 绑定与解绑
 - 管理区：公告创建、编辑、草稿、定时发布和删除；玩家搜索、绑定信息、停用与恢复账号
 - API 健康检查（每 30 秒刷新，后台页面不自动轮询；不是游戏服务器状态）
 - 管理路由在读取当前用户后检查角色；接口仍以服务端权限为准
 - 动效遵循 `prefers-reduced-motion`：减少动态时取消滚动钉住、视差与自动播放
-- 视频离屏自动暂停；WebGL 已不再用于页面渲染（three.js 仅保留给旧单元测试）
+- 登录、玩家中心、公告、积分和管理页面统一使用黄铜按钮、机壳面板、方形输入框；业务页面样式限制在 `.business-page`，避免污染新版站点
 
-## 视觉与素材
+## 旧电影感页面素材（历史对照）
 
 首页采用暗色影院风格：近黑底、羊皮纸白文字、草绿主色，超大字重中文标题使用自托管的 **得意黑 Smiley Sans**（OFL，按站点用字子集化，约 88KB），排版与滚动叙事参考 Awwwards 风格站点（如 zentry 克隆）的结构，但**没有**使用 zentry 的视频/图片/字体。
 
@@ -44,7 +49,7 @@ MCTP / 方块社区前端，基于 Vue 3 + Vite 构建：Minecraft 主题的电�
 - `src/components/film/FilmVideo.vue`、`FilmTilt.vue`、`FilmBentoCard.vue`、`FilmLoader.vue`：视频宿主、3D 倾斜、Bento 卡片、载入遮罩。
 - `src/components/cinematic/`：AnimatedTitle（中文逐字 3D 翻入）、CinematicButton。
 - `src/animations/motion.js`：GSAP + ScrollTrigger 注册与 Vue 生命周期封装。
-- `src/assets/cinematic.css`、`src/style.css`：电影感样式层与全站暗色 tokens。
+- `src/assets/cinematic.css`：历史电影感样式；`src/style.css`：当前主站业务页的黄铜／机壳样式域。
 - `src/assets/media.js`：所有媒体的唯一入口（视频、海报、大图）。
 - `src/assets/fonts/`：得意黑子集（`scripts/subset-font.py` 可重新生成）。
 
@@ -115,6 +120,17 @@ cp .env.example .env.local
 # 启动开发服务器
 npm run dev
 ```
+
+### 本地真实 API 联调（PowerShell）
+
+先按后端仓库说明运行 Django 的检查、数据库迁移与开发服务。前后端使用相同 host，例如 API 为 `http://127.0.0.1:8000`：
+
+```powershell
+$env:VITE_API_BASE_URL = 'http://127.0.0.1:8000'
+npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
+```
+
+访问 `http://127.0.0.1:5173/#/home`。密码注册／登录经 allauth 浏览器会话换取 JWT；管理公告与积分需要真实管理员账号。测试请使用独立数据库，不使用生产账号或生产数据。微软绑定还需后端 OAuth 配置和真实授权，不能以密码登录通过代替其验收。
 
 ### 可用命令
 

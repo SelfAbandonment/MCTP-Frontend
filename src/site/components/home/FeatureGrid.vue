@@ -18,17 +18,49 @@ import { FEATURES } from '../../content/features'
 
 <template>
   <div class="feature-grid">
-    <div v-for="f in FEATURES" :key="f.key" class="cell">
-      <div v-if="f.disabled" class="tile is-disabled" aria-disabled="true">
-        <PixelIcon class="icon" :icon="f.icon" :size="64" />
-        <PixelText class="name" :text="f.name" :px="2" />
+    <div
+      v-for="f in FEATURES"
+      :key="f.key"
+      class="cell"
+    >
+      <div
+        v-if="f.disabled"
+        class="tile is-disabled"
+        aria-disabled="true"
+      >
+        <PixelIcon
+          class="icon"
+          :icon="f.icon"
+          :size="64"
+        />
+        <PixelText
+          class="name"
+          :text="f.name"
+          :px="2"
+        />
         <span class="en">{{ f.en }}</span>
         <span class="desc">{{ f.desc }}</span>
       </div>
-      <router-link v-else :to="`/home/f/${f.key}`" class="tile">
-        <span v-if="f.review" class="tag">需审核</span>
-        <PixelIcon class="icon" :icon="f.icon" :size="64" :label="f.name" />
-        <PixelText class="name" :text="f.name" :px="2" />
+      <router-link
+        v-else
+        :to="`/home/f/${f.key}`"
+        class="tile"
+      >
+        <span
+          v-if="f.review"
+          class="tag"
+        >需审核</span>
+        <PixelIcon
+          class="icon"
+          :icon="f.icon"
+          :size="64"
+          :label="f.name"
+        />
+        <PixelText
+          class="name"
+          :text="f.name"
+          :px="2"
+        />
         <span class="en">{{ f.en }}</span>
         <span class="desc">{{ f.desc }}</span>
       </router-link>

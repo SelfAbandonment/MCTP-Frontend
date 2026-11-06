@@ -45,14 +45,46 @@ const cells = computed(() => {
 </script>
 
 <template>
-  <div class="pixel-avatar" :style="{ width: `${size}px`, height: `${size}px` }">
-    <img v-if="src && !locked" :src="src" alt="头像" />
-    <svg v-else-if="cells" viewBox="0 0 8 8" shape-rendering="crispEdges" aria-label="头像">
-      <rect v-for="(c, i) in cells" :key="i" :x="c.x" :y="c.y" width="1" height="1" :fill="c.c" />
+  <div
+    class="pixel-avatar"
+    :style="{ width: `${size}px`, height: `${size}px` }"
+  >
+    <img
+      v-if="src && !locked"
+      :src="src"
+      alt="头像"
+    >
+    <svg
+      v-else-if="cells"
+      viewBox="0 0 8 8"
+      shape-rendering="crispEdges"
+      aria-label="头像"
+    >
+      <rect
+        v-for="(c, i) in cells"
+        :key="i"
+        :x="c.x"
+        :y="c.y"
+        width="1"
+        height="1"
+        :fill="c.c"
+      />
     </svg>
-    <svg v-else viewBox="0 0 8 8" shape-rendering="crispEdges" aria-label="未登录">
-      <rect width="8" height="8" fill="#3a3b40" />
-      <path d="M2 1h4v1h1v2h-1v1h-1v1h-2v-2h1v-1h1v-1h-2v1h-2v-1h1z M3 6h2v1h-2z" fill="#9a9aa0" />
+    <svg
+      v-else
+      viewBox="0 0 8 8"
+      shape-rendering="crispEdges"
+      aria-label="未登录"
+    >
+      <rect
+        width="8"
+        height="8"
+        fill="#3a3b40"
+      />
+      <path
+        d="M2 1h4v1h1v2h-1v1h-1v1h-2v-2h1v-1h1v-1h-2v1h-2v-1h1z M3 6h2v1h-2z"
+        fill="#9a9aa0"
+      />
     </svg>
   </div>
 </template>

@@ -24,20 +24,48 @@ function toggle(v) {
   <CreatePanel class="changelog">
     <div class="inner">
       <header class="head">
-        <PixelText text="更新日志" :px="3" />
+        <PixelText
+          text="更新日志"
+          :px="3"
+        />
       </header>
       <ol class="timeline">
-        <li v-for="(c, i) in CHANGELOG" :key="c.version" class="entry" :class="{ open: open.has(c.version), latest: i === 0 }">
-          <button type="button" class="entry-head" :aria-expanded="open.has(c.version)" @click="toggle(c.version)">
+        <li
+          v-for="(c, i) in CHANGELOG"
+          :key="c.version"
+          class="entry"
+          :class="{ open: open.has(c.version), latest: i === 0 }"
+        >
+          <button
+            type="button"
+            class="entry-head"
+            :aria-expanded="open.has(c.version)"
+            @click="toggle(c.version)"
+          >
             <i class="node" />
             <span class="ver">{{ c.version }}</span>
             <span class="title">{{ c.title }}</span>
-            <time class="date" :datetime="c.date">{{ c.date }}</time>
-            <span class="arrow" aria-hidden="true">{{ open.has(c.version) ? '▾' : '▸' }}</span>
+            <time
+              class="date"
+              :datetime="c.date"
+            >{{ c.date }}</time>
+            <span
+              class="arrow"
+              aria-hidden="true"
+            >{{ open.has(c.version) ? '▾' : '▸' }}</span>
           </button>
-          <ul v-show="open.has(c.version)" class="items">
-            <li v-for="(it, j) in c.items" :key="j">
-              <span class="type" :style="{ background: CHANGE_TYPES[it.type]?.color }">{{ CHANGE_TYPES[it.type]?.label }}</span>
+          <ul
+            v-show="open.has(c.version)"
+            class="items"
+          >
+            <li
+              v-for="(it, j) in c.items"
+              :key="j"
+            >
+              <span
+                class="type"
+                :style="{ background: CHANGE_TYPES[it.type]?.color }"
+              >{{ CHANGE_TYPES[it.type]?.label }}</span>
               <span class="text">{{ it.text }}</span>
             </li>
           </ul>

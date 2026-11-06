@@ -1,6 +1,6 @@
 /**
  * 文件用途：反馈页"书与笔"的提交
- * 现状：【模拟】只保存在浏览器本地（截图只记文件名和大小，不保存图片本身，避免撑爆本地存储）。
+ * 现状：后端尚未提供反馈接口，界面保留但提交明确禁用，不保存本地假反馈。
  * 接入真实后端时：MCTP-API 目前没有反馈接口，建议新增
  *   POST /api/v1/feedback/  （multipart/form-data）
  *     category        bug | suggestion | report | appeal | other
@@ -10,9 +10,8 @@
  *     screenshots[]   截图文件（选填，最多 3 张）
  * 然后把 submitFeedback 内部换成请求即可。
  */
-import { readJSON, writeJSON, delay } from './storage'
-
-const KEY = 'mctp-mock-feedback'
+export const FEEDBACK_AVAILABLE = false
+export const FEEDBACK_UNAVAILABLE = '反馈提交尚未开放：后端接口正在准备中，请通过站点交流渠道联系管理员。'
 
 export const CATEGORIES = [
   { value: 'bug', label: 'Bug' },
@@ -36,20 +35,6 @@ export function validateFeedback(f) {
   return e
 }
 
-/** 【模拟】提交反馈 */
-export async function submitFeedback(f, uid = null) {
-  await delay(500)
-  const list = readJSON(KEY, [])
-  list.push({
-    id: Date.now(),
-    uid,
-    category: f.category,
-    customCategory: f.category === 'other' ? f.customCategory.trim() : '',
-    reportedUid: f.reportedUid.trim(),
-    content: f.content.trim(),
-    screenshots: f.shots.map((s) => ({ name: s.file.name, size: s.file.size })),
-    createdAt: new Date().toISOString(),
-  })
-  writeJSON(KEY, list.slice(-50))
-  return true
+export async function submitFeedback() {
+  throw new Error(FEEDBACK_UNAVAILABLE)
 }

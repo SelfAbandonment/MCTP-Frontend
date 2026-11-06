@@ -159,7 +159,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="rootRef" class="lang" :class="{ 'is-open': isOpen }">
+  <div
+    ref="rootRef"
+    class="lang"
+    :class="{ 'is-open': isOpen }"
+  >
     <button
       type="button"
       class="lang-btn"
@@ -168,7 +172,10 @@ onBeforeUnmount(() => {
       aria-label="Language"
       @click="toggle"
     >
-      <PixelText text="Language" :px="2" />
+      <PixelText
+        text="Language"
+        :px="2"
+      />
     </button>
 
     <div
@@ -187,7 +194,10 @@ onBeforeUnmount(() => {
       @pointerup="onPointerUp"
       @pointercancel="onPointerUp"
     >
-      <div class="drum-3d" :style="{ transform: `translateZ(${-R}px)` }">
+      <div
+        class="drum-3d"
+        :style="{ transform: `translateZ(${-R}px)` }"
+      >
         <button
           v-for="(l, k) in LANGS"
           :key="l.code"
@@ -201,7 +211,10 @@ onBeforeUnmount(() => {
           :style="itemStyle(k)"
           @click="choose(k)"
         >
-          <PixelText :text="l.word" :px="2" />
+          <PixelText
+            :text="l.word"
+            :px="2"
+          />
           <span class="code">{{ l.code.toUpperCase() }}</span>
         </button>
       </div>

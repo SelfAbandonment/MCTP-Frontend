@@ -125,7 +125,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <canvas ref="canvasRef" class="star-field" aria-hidden="true" />
+  <canvas
+    ref="canvasRef"
+    class="star-field"
+    aria-hidden="true"
+  />
 </template>
 
 <style scoped>

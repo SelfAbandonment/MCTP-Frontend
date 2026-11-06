@@ -165,28 +165,81 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div v-show="visible" class="page-transition" aria-hidden="true">
-    <svg :width="st.W" :height="st.H" :viewBox="`0 0 ${st.W} ${st.H}`" shape-rendering="crispEdges">
+  <div
+    v-show="visible"
+    class="page-transition"
+    aria-hidden="true"
+  >
+    <svg
+      :width="st.W"
+      :height="st.H"
+      :viewBox="`0 0 ${st.W} ${st.H}`"
+      shape-rendering="crispEdges"
+    >
       <defs>
-        <mask id="pt-mask" maskUnits="userSpaceOnUse" x="0" y="0" :width="st.W" :height="st.H">
-          <rect :width="st.W" :height="st.H" fill="#fff" />
-          <path v-if="st.mHole" :d="word.letters[0].d" :transform="T(st.L[0])" fill="#000" />
-          <path v-if="st.aHole" :d="word.letters[LAST].d" :transform="T(st.L[LAST])" fill="#000" />
+        <mask
+          id="pt-mask"
+          maskUnits="userSpaceOnUse"
+          x="0"
+          y="0"
+          :width="st.W"
+          :height="st.H"
+        >
+          <rect
+            :width="st.W"
+            :height="st.H"
+            fill="#fff"
+          />
+          <path
+            v-if="st.mHole"
+            :d="word.letters[0].d"
+            :transform="T(st.L[0])"
+            fill="#000"
+          />
+          <path
+            v-if="st.aHole"
+            :d="word.letters[LAST].d"
+            :transform="T(st.L[LAST])"
+            fill="#000"
+          />
         </mask>
       </defs>
 
-      <rect :width="st.W" :height="st.H" fill="#000" :opacity="visibleBg.o" mask="url(#pt-mask)" />
+      <rect
+        :width="st.W"
+        :height="st.H"
+        fill="#000"
+        :opacity="visibleBg.o"
+        mask="url(#pt-mask)"
+      />
 
       <!--
         每个字母 = 黑色底板（与背景同色，看不见）+ 白色字形，像一叠卡片：
         叠在下面的字母被上面字母的底板挡住，不会从镂空处透出来。
         叠放顺序：展开阶段 M 在最上（字母从 M 背后出来），收拢阶段 A 在最上（字母躲进 A 背后）。
       -->
-      <template v-for="i in order" :key="i">
-        <g v-if="showLetter(i)" :transform="T(st.L[i])">
+      <template
+        v-for="i in order"
+        :key="i"
+      >
+        <g
+          v-if="showLetter(i)"
+          :transform="T(st.L[i])"
+        >
           <!-- 黑色底板：A 变成洞之后去掉，否则会挡住洞里的新页面 -->
-          <rect v-if="(i !== 0 || st.mFill >= 1) && !(i === LAST && st.aHole)" x="0" y="0" width="5" height="7" fill="#000" />
-          <path :d="word.letters[i].d" fill="#fff" :opacity="i === 0 ? st.mFill : i === LAST ? st.aFill : 1" />
+          <rect
+            v-if="(i !== 0 || st.mFill >= 1) && !(i === LAST && st.aHole)"
+            x="0"
+            y="0"
+            width="5"
+            height="7"
+            fill="#000"
+          />
+          <path
+            :d="word.letters[i].d"
+            fill="#fff"
+            :opacity="i === 0 ? st.mFill : i === LAST ? st.aFill : 1"
+          />
         </g>
       </template>
     </svg>

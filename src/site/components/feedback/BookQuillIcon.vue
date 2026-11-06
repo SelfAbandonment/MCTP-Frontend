@@ -33,8 +33,24 @@ defineProps({ size: { type: Number, default: 128 } })
 </script>
 
 <template>
-  <svg class="book-quill" :width="size" :height="size" viewBox="0 0 16 16" shape-rendering="crispEdges" role="img" aria-label="书与笔">
-    <rect v-for="(p, i) in pixels" :key="i" :x="p.x" :y="p.y" width="1" height="1" :fill="p.c" />
+  <svg
+    class="book-quill"
+    :width="size"
+    :height="size"
+    viewBox="0 0 16 16"
+    shape-rendering="crispEdges"
+    role="img"
+    aria-label="书与笔"
+  >
+    <rect
+      v-for="(p, i) in pixels"
+      :key="i"
+      :x="p.x"
+      :y="p.y"
+      width="1"
+      height="1"
+      :fill="p.c"
+    />
   </svg>
 </template>
 

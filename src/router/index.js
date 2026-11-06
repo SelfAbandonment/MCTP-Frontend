@@ -1,14 +1,53 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import BusinessPage from '@/components/BusinessPage.vue'
+import { coverScreen } from '@/site/composables/usePageTransition'
 
-const DEFAULT_TITLE = 'MCTP · 方块社区'
+const DEFAULT_TITLE = 'MCTP · MCREATOPIA'
 
 const routes = [
   {
     path: '/',
-    component: () => import('@/views/HomeView.vue'),
+    name: 'index',
+    component: () => import('@/site/pages/IndexPage.vue'),
     meta: { title: DEFAULT_TITLE },
   },
+  {
+    path: '/home',
+    name: 'home',
+    component: () => import('@/site/pages/HomePage.vue'),
+    meta: { title: '主页面 · MCTP' },
+  },
+  {
+    path: '/feedback',
+    name: 'feedback',
+    component: () => import('@/site/pages/FeedbackPage.vue'),
+    meta: { title: '反馈 · MCTP' },
+  },
+  {
+    path: '/home/f/points',
+    redirect: '/points',
+  },
+  {
+    path: '/home/f/:key',
+    name: 'feature',
+    component: () => import('@/site/pages/FeaturePage.vue'),
+    meta: { title: '功能 · MCTP' },
+  },
+  {
+    path: '/legal/:doc?',
+    name: 'legal',
+    component: () => import('@/site/pages/LegalPage.vue'),
+    meta: { title: '协议条款 · MCTP' },
+  },
+  {
+    path: '/home/announcements',
+    redirect: '/manage/announcements',
+  },
+  {
+    path: '/',
+    component: BusinessPage,
+    children: [
   {
     path: '/login',
     component: () => import('@/views/LoginView.vue'),
@@ -81,6 +120,8 @@ const routes = [
     props: { mode: 'missing' },
     meta: { title: '页面不存在 · MCTP' },
   },
+    ],
+  },
 ]
 
 const router = createRouter({
@@ -99,7 +140,7 @@ router.afterEach((to) => {
   document.title = to.meta.title || DEFAULT_TITLE
 })
 
-router.beforeEach(async (to) => {
+router.beforeEach(async (to, from) => {
   const auth = useAuthStore()
   if (to.meta.requiresAuth && !auth.isLoggedIn) {
     return { path: '/login', query: { redirect: to.fullPath } }
@@ -114,7 +155,10 @@ router.beforeEach(async (to) => {
   }
   if (to.meta.requiresStaff && !auth.isStaff) return '/forbidden'
   if (to.meta.guestOnly && auth.isLoggedIn) {
-    return { path: '/dashboard' }
+    return { path: '/home' }
+  }
+  if (from.matched.length && to.path !== from.path && !(to.name && to.name === from.name)) {
+    await coverScreen()
   }
 })
 

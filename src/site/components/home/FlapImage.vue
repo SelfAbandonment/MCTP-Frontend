@@ -25,13 +25,34 @@ const bg = (src) => (src ? { backgroundImage: `url("${src.replace(/"/g, '%22')}"
 </script>
 
 <template>
-  <div class="flap-image" aria-hidden="true">
-    <div class="half top" :class="{ empty: !cur }" :style="bg(cur)" />
+  <div
+    class="flap-image"
+    aria-hidden="true"
+  >
+    <div
+      class="half top"
+      :class="{ empty: !cur }"
+      :style="bg(cur)"
+    />
     <!-- 静态下半片：翻页过程中先露出旧图，等新图的下半片翻下来盖住 -->
-    <div class="half bottom" :class="{ empty: !(n ? prev : cur) }" :style="bg(n ? prev : cur)" />
+    <div
+      class="half bottom"
+      :class="{ empty: !(n ? prev : cur) }"
+      :style="bg(n ? prev : cur)"
+    />
     <template v-if="n">
-      <div :key="'t' + n" class="half top flap-top" :class="{ empty: !prev }" :style="bg(prev)" />
-      <div :key="'b' + n" class="half bottom flap-bottom" :class="{ empty: !cur }" :style="bg(cur)" />
+      <div
+        :key="'t' + n"
+        class="half top flap-top"
+        :class="{ empty: !prev }"
+        :style="bg(prev)"
+      />
+      <div
+        :key="'b' + n"
+        class="half bottom flap-bottom"
+        :class="{ empty: !cur }"
+        :style="bg(cur)"
+      />
     </template>
     <span class="seam" />
   </div>

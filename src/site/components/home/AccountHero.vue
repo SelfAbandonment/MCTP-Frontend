@@ -6,7 +6,9 @@
  * 未登录：左侧显示问号头像和"登录"按钮（跳转 /login，登录界面另做）；
  *         右侧运势模糊锁定。不登录也能继续往下浏览公告等内容。
  */
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { errorMessage } from '@/utils/errors'
 import CreatePanel from './CreatePanel.vue'
 import PixelAvatar from './PixelAvatar.vue'
 import FortunePanel from './FortunePanel.vue'
@@ -15,6 +17,24 @@ import { account, isLoggedIn, isAdmin, logout } from '../../services/account'
 
 const copied = ref(false)
 let copiedTimer
+const auth = useAuthStore()
+const sessionLoading = ref(false)
+const sessionError = ref('')
+
+async function restoreSession() {
+  sessionLoading.value = true
+  sessionError.value = ''
+  try {
+    await auth.ensureSession()
+  } catch (error) {
+    sessionError.value = errorMessage(error, '无法读取玩家资料，请重试')
+  } finally {
+    sessionLoading.value = false
+  }
+}
+
+onMounted(restoreSession)
+onBeforeUnmount(() => clearTimeout(copiedTimer))
 
 /**
  * 作用：复制 UID 到剪贴板。
@@ -42,45 +62,137 @@ async function copyUid() {
 
 <template>
   <section class="hero">
-    <CreatePanel float class="panel">
+    <CreatePanel
+      float
+      class="panel"
+    >
       <div class="grid">
         <!-- 左 1/3：账号 -->
         <div class="who">
-          <template v-if="isLoggedIn">
-            <PixelAvatar :uid="account.uid" :src="account.avatar || ''" :size="128" />
+          <p
+            v-if="sessionLoading"
+            role="status"
+          >
+            正在读取玩家资料…
+          </p>
+          <div
+            v-else-if="sessionError"
+            role="alert"
+          >
+            <p>{{ sessionError }}</p>
+            <button
+              type="button"
+              class="mc-btn"
+              @click="restoreSession"
+            >
+              重试
+            </button>
+          </div>
+          <template v-else-if="isLoggedIn">
+            <PixelAvatar
+              :uid="account.uid"
+              :src="account.avatar || ''"
+              :size="128"
+            />
             <div class="name">
-              <PixelText :text="account.name" :px="3" />
+              <PixelText
+                :text="account.name"
+                :px="3"
+              />
             </div>
             <div class="uid">
-              <PixelText :text="`UID ${account.uid}`" :px="2" />
-              <button type="button" class="copy" :aria-label="copied ? '已复制' : '复制 UID'" :title="copied ? '已复制' : '复制 UID'" @click="copyUid">
+              <PixelText
+                :text="`UID ${account.uid}`"
+                :px="2"
+              />
+              <button
+                type="button"
+                class="copy"
+                :aria-label="copied ? '已复制' : '复制 UID'"
+                :title="copied ? '已复制' : '复制 UID'"
+                @click="copyUid"
+              >
                 <!-- 像素"两张叠放的纸"复制图标 -->
-                <svg v-if="!copied" viewBox="0 0 10 10" shape-rendering="crispEdges">
-                  <path d="M3 0h7v7h-2v-1h1v-5h-5v1h-1z" fill="currentColor" />
-                  <path d="M0 3h7v7h-7zM1 4v5h5v-5z" fill="currentColor" />
+                <svg
+                  v-if="!copied"
+                  viewBox="0 0 10 10"
+                  shape-rendering="crispEdges"
+                >
+                  <path
+                    d="M3 0h7v7h-2v-1h1v-5h-5v1h-1z"
+                    fill="currentColor"
+                  />
+                  <path
+                    d="M0 3h7v7h-7zM1 4v5h5v-5z"
+                    fill="currentColor"
+                  />
                 </svg>
-                <svg v-else viewBox="0 0 10 10" shape-rendering="crispEdges">
-                  <path d="M8 2h1v1h-1v1h-1v1h-1v1h-1v1h-1v1h-1v-1h-1v-1h-1v-1h1v1h1v1h1v-1h1v-1h1v-1h1v-1h1z" fill="currentColor" />
+                <svg
+                  v-else
+                  viewBox="0 0 10 10"
+                  shape-rendering="crispEdges"
+                >
+                  <path
+                    d="M8 2h1v1h-1v1h-1v1h-1v1h-1v1h-1v1h-1v-1h-1v-1h-1v-1h1v1h1v1h1v-1h1v-1h1v-1h1v-1h1z"
+                    fill="currentColor"
+                  />
                 </svg>
               </button>
-              <span class="toast" :class="{ show: copied }">已复制</span>
+              <span
+                class="toast"
+                :class="{ show: copied }"
+              >已复制</span>
             </div>
-            <span v-if="isAdmin" class="badge">管理员</span>
-            <button type="button" class="logout" @click="logout">退出登录</button>
+            <span
+              v-if="isAdmin"
+              class="badge"
+            >管理员</span>
+            <router-link
+              to="/dashboard"
+              class="mc-btn is-ghost"
+            >玩家中心</router-link>
+            <router-link
+              to="/points"
+              class="mc-btn is-ghost"
+            >我的积分</router-link>
+            <button
+              type="button"
+              class="logout"
+              @click="logout"
+            >
+              退出登录
+            </button>
           </template>
           <template v-else>
-            <PixelAvatar locked :size="128" />
+            <PixelAvatar
+              locked
+              :size="128"
+            />
             <div class="name">
-              <PixelText text="未登录" :px="3" />
+              <PixelText
+                text="未登录"
+                :px="3"
+              />
             </div>
-            <p class="tip">登录后可查看今日运势与更多功能</p>
-            <router-link to="/login" class="mc-btn"><PixelText text="登录" :px="2" /></router-link>
+            <p class="tip">
+              登录后可查看今日运势与更多功能
+            </p>
+            <router-link
+              :to="{ path: '/login', query: { redirect: '/home' } }"
+              class="mc-btn"
+            ><PixelText
+              text="登录"
+              :px="2"
+            /></router-link>
           </template>
         </div>
 
         <!-- 右 2/3：今日运势 -->
         <div class="luck">
-          <FortunePanel :uid="account?.uid ?? null" :locked="!isLoggedIn" />
+          <FortunePanel
+            :uid="account?.uid ?? null"
+            :locked="!isLoggedIn"
+          />
         </div>
       </div>
     </CreatePanel>

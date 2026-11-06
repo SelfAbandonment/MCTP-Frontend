@@ -28,16 +28,60 @@ const ticks = Array.from({ length: 9 }, (_, i) => 1 + (i + 1) * 18)
     aria-valuemax="100"
     :aria-valuenow="Math.round(progress * 100)"
   >
-    <rect x="0" y="0" width="182" height="7" fill="#000" />
-    <rect x="1" y="1" width="180" height="5" fill="#2a2a2a" />
-    <rect x="1" y="5" width="180" height="1" fill="#1a1a1a" />
+    <rect
+      x="0"
+      y="0"
+      width="182"
+      height="7"
+      fill="#000"
+    />
+    <rect
+      x="1"
+      y="1"
+      width="180"
+      height="5"
+      fill="#2a2a2a"
+    />
+    <rect
+      x="1"
+      y="5"
+      width="180"
+      height="1"
+      fill="#1a1a1a"
+    />
     <g v-if="fill > 0">
-      <rect x="1" y="1" :width="fill" height="1" fill="#c6ff73" />
-      <rect x="1" y="2" :width="fill" height="3" fill="#80e82b" />
-      <rect x="1" y="5" :width="fill" height="1" fill="#3f8f12" />
+      <rect
+        x="1"
+        y="1"
+        :width="fill"
+        height="1"
+        fill="#c6ff73"
+      />
+      <rect
+        x="1"
+        y="2"
+        :width="fill"
+        height="3"
+        fill="#80e82b"
+      />
+      <rect
+        x="1"
+        y="5"
+        :width="fill"
+        height="1"
+        fill="#3f8f12"
+      />
     </g>
     <!-- 分段刻度 -->
-    <rect v-for="x in ticks" :key="x" :x="x" y="1" width="1" height="5" :fill="x <= fill ? '#2f6b0c' : '#141414'" />
+    <rect
+      v-for="x in ticks"
+      :key="x"
+      :x="x"
+      y="1"
+      width="1"
+      height="5"
+      :fill="x <= fill ? '#2f6b0c' : '#141414'"
+    />
   </svg>
 </template>
 

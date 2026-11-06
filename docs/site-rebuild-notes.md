@@ -1,17 +1,17 @@
-# 新版站点重建说明（2026-11-04）
+# 新版主站说明（2026-11-06）
 
 > 说明：文中提到的 `src/site/_backup-r2/`、`src/site/_backup-r6/` 是开发过程中的本地备份，**没有提交到仓库**。
 
-新站点全部放在 `src/site/`。上一版展示页（旧的 `/legacy` 路由和 `src/preview/` 副本）已移除，
-需要对照时请看主应用里已有的 `/preview` 页面，不在这里重复维护一份。
+原 Showcase 已成为前端主应用，界面放在 `src/site/`，统一入口是 `src/main.js` 与 `src/router/index.js`。
+迁移前 `develop` 已备份至远端 `backup/develop-before-showcase-20261106`（`acca6b0`）。
 
 ## 部署与构建
 
-- 本地开发：`npm run dev`（http://localhost:5174）；本地构建：`npm run build`（产物在 `dist/`，同时生成 `404.html` 兜底）。
-- 部署到子路径：`SHOWCASE_BASE=/子路径/ npm run build`；子路径下还要直接打开子页面链接时，再加 `VITE_ROUTER_MODE=hash`（地址形如 `/子路径/#/home`）。
-- CI：仓库根目录 `.github/workflows/ci.yml` 的 `showcase` 任务会单独安装依赖并构建本工程；PR 改动了 `showcase/` 时，预览站部署的是本工程的产物。
-- 页面按需加载（three.js 只在索引页的代码块里），首屏之后空闲时预取其余页面。
-- 页面右下角常驻"演示站 · 数据为本地模拟"标记：登录、公告、反馈、评论都是浏览器本地模拟数据，管理员身份没有真实鉴权，不要接到正式站的导航里。
+- 根目录本地开发：`npm run dev`（默认 http://localhost:5173/#/home）；构建：`npm run build`（产物在根目录 `dist/`）。
+- 使用相对 `base: './'` 和 hash 路由，同一产物可部署到根路径、Pages 或 PR 子目录，无需 `SHOWCASE_BASE`、`VITE_ROUTER_MODE`。
+- CI 统一运行根目录 lint、test、build；同仓和 fork PR 预览只部署根应用 `dist`。
+- 页面按需加载，three.js 只在索引页的代码块里。
+- 演示标记和模拟账号已移除，登录、账号与管理员身份来自现有 allauth/JWT 与 `auth` store；未实现的接口不模拟成功。
 
 ## 页面流程
 
@@ -41,8 +41,8 @@
 | 四.1 主页面：悬浮账号面板（头像 / 名字 / UID 复制）+ 右侧今日运势 | `pages/HomePage.vue`、`components/home/AccountHero.vue`、`FortunePanel.vue` |
 | 四.2 今日运势（按 UID + 日期每日轮换）、塔罗抽牌、星盘点评 | `src/site/fortune/fortune.js`、`tarot.js`、`astro.js`；界面 `TarotSpread.vue`、`Astrolabe.vue` |
 | 四.3 公告：翻牌显示器横向选项卡，10 秒轮换 + 滚轮切换 | `components/home/FlapBoard.vue`、`FlapText.vue`、`FlapImage.vue` |
-| 四.3 公告可视化编辑（管理员，1~10 个选项卡） | `pages/AnnouncementEditPage.vue`（路由 `/home/announcements`）、数据 `services/announcements.js` |
-| 四 登录界面（占位，含模拟登录按钮） | `pages/LoginPage.vue`（路由 `/login`）、账号 `services/account.js` |
+| 四.3 公告编辑（真实权限、草稿和定时发布） | `/home/announcements` 重定向 `/manage/announcements`，复用 `src/views/ManageAnnouncementsView.vue` |
+| 四 登录与注册 | 复用 `src/views/LoginView.vue`、`RegisterView.vue` 和现有 Microsoft 回调；账号 `services/account.js` 来自真实 auth store |
 | 五 反馈页"书与笔" + 合书动画 + 物品图标 | `pages/FeedbackPage.vue`、`components/feedback/BookQuillIcon.vue`、提交 `services/feedback.js` |
 | 像素字 | `src/site/pixel/glyphs.js`（自绘 5×7 字母）、`pixel/rasterize.js`（中文点阵化） |
 
@@ -73,16 +73,18 @@
 6. **音乐 / 音效**（可选）：背景音乐和按钮点击音效。如果要加，还需要一个静音开关。
 7. **中文像素字体**（可选）：woff2 文件。
 
-## 第四轮：哪些是"模拟"的（接后端前必读）
+## 正式接口与本地计算
 
-后端 MCTP-API 目前只有账号接口（`/api/v1/auth/me/` 返回 id、username、绑定的 Minecraft 名），**没有头像、管理员标记、公告、反馈接口**。
-所以下面三块先用浏览器本地存储模拟，页面代码只调用 `src/site/services/` 里的函数，接后端时只改这三个文件：
+- `services/account.js` 读取现有 auth store 的真实账号，使用 `/api/v1/auth/me/` 提供的 `id`、`username`、`minecraft`、`is_staff`、`is_active`；不模拟身份。不支持的头像使用本站生成的像素头像。
+- `services/announcements.js` 读取已存在的公开分页公告 API，将 `title`、`summary` 映射到翻牌板；封面接口尚不支持，保持空封面。显示前 10 条公告，点击进入 `/announcements/{id}`。加载失败显示错误和重试，不回退假公告。
+- 管理公告、玩家中心、积分仍使用现有真实接口和服务端权限。业务页面位于 `.business-page` 样式域，统一黄铜／安山机壳配色、方形按钮和输入框；登录与玩家欢迎面板复用 `CreatePanel`、`PixelText`、`PixelAvatar`，不再展示旧影院照片。
+- 今日运势、塔罗和星盘一直是浏览器本地娱乐计算，不是 HTTP 接口；使用真实 UID 作为种子，不需要后端接口。
+- 后端尚无评论与反馈 API：最近评论显示未开放，反馈页保留界面但禁用提交。`submitFeedback()` 明确拒绝，不能写本地存储或显示已提交成功。
+- 模型、Logo 与部分页脚素材仍待管理团队提供；这和业务数据模拟无关。
 
-| 文件 | 现在 | 接后端时 |
-| --- | --- | --- |
-| `services/account.js` | `/login` 页上的两个按钮模拟登录 | 走现有 allauth + JWT；后端补 `avatar`、`is_staff` 字段，用 `fromApiUser()` 转换 |
-| `services/announcements.js` | 公告存在本机，只有本浏览器能看到修改 | 新增 `GET/PUT /api/v1/announcements/` |
-| `services/feedback.js` | 反馈存在本机（截图只记文件名） | 新增 `POST /api/v1/feedback/`（multipart） |
+## 历史第四轮笔记
+
+以下记录仅描述当时演示站的开发过程，不代表当前主站接口：
 
 运势与塔罗结果按"UID + 日期"存在本机，换设备会重新抽；如需跨设备一致，可以把"是否已抽、抽到哪张、点击时刻"也存到后端。
 
@@ -93,7 +95,7 @@
 | 功能区 8 个像素矢量图标（两行四个） | `src/site/components/home/FeatureGrid.vue`；图标与文案在 `src/site/content/features.js`；通用图标组件 `src/site/components/PixelIcon.vue` |
 | 点击功能 → 介绍页（功能本身待开发） | `src/site/pages/FeaturePage.vue`，路由 `/home/f/:key`；"敬请期待"不可点击 |
 | 更新日志 | `src/site/components/home/ChangelogPanel.vue`，数据 `src/site/content/changelog.js`（手写，本站真实更新记录） |
-| 最近评论 | `src/site/components/home/RecentComments.vue`，数据 `src/site/services/comments.js`（**示例数据**） |
+| 最近评论 | `src/site/components/home/RecentComments.vue`，当前明确显示后端接口未开放 |
 | 全站页脚（用户交流 / 站点支持 / 协议条款） | `src/site/components/SiteFooter.vue`，链接在 `src/site/content/footer.js`；普通页面由 `SiteShell.vue` 自动加，索引页最后一段用精简版 |
 | 协议条款页 | `src/site/pages/LegalPage.vue`，路由 `/legal/:doc`，正文 `src/site/content/legal.js`（**全部是草案**） |
 
@@ -103,7 +105,7 @@
 需要你提供或确认：
 - `content/footer.js`：玩家 QQ 群、Oopz、B 站、联系邮箱、ICP 备案号（没填的链接显示灰色"待填"）；
 - `content/legal.js`：四份协议草案，尤其是隐私政策里标了【待确认】的日志、第三方服务、保存期限；定稿后把 `draft` 改成 `false`；
-- 最近评论接后端时，建议新增 `GET /api/v1/comments/recent/?limit=8`，把 `RecentComments.vue` 里的 `IS_SAMPLE` 改成 `false`；
+- 最近评论开放前，需要先新增后端评论接口，再实现真实读取；
 - 更新日志如果要由管理员在后台维护，建议新增 `GET /api/v1/changelog/`。
 
 ## 第六轮调整（2026-11-05）

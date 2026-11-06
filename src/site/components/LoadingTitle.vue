@@ -24,15 +24,32 @@ const clip = computed(() => `inset(0 ${(1 - props.progress) * 100}% 0 0)`)
 </script>
 
 <template>
-  <div v-if="pngUrl" class="title-png" :style="{ '--title-img': `url(${pngUrl})` }">
-    <img :src="pngUrl" alt="LOADING" draggable="false" />
+  <div
+    v-if="pngUrl"
+    class="title-png"
+    :style="{ '--title-img': `url(${pngUrl})` }"
+  >
+    <img
+      :src="pngUrl"
+      alt="LOADING"
+      draggable="false"
+    >
     <div class="gold-wrap">
-      <div class="gold" :style="{ clipPath: clip }">
-        <span class="shimmer" :style="{ left: `${progress * 100}%`, opacity: progress > 0 && progress < 1 ? 1 : 0 }" />
+      <div
+        class="gold"
+        :style="{ clipPath: clip }"
+      >
+        <span
+          class="shimmer"
+          :style="{ left: `${progress * 100}%`, opacity: progress > 0 && progress < 1 ? 1 : 0 }"
+        />
       </div>
     </div>
   </div>
-  <div v-else class="title-fallback">
+  <div
+    v-else
+    class="title-fallback"
+  >
     <CreateWord :progress="progress" />
   </div>
 </template>

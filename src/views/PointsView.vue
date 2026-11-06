@@ -232,8 +232,9 @@ onMounted(load)
 .points-rank {
   flex: 0 0 auto;
   padding: 5px 12px;
-  border: 1px solid #8ce06a44;
-  border-radius: 999px;
+  border: 2px solid var(--outline);
+  border-radius: 0;
+  background: var(--casing-lo);
   color: var(--brand);
   font-size: 12px;
 }
@@ -258,8 +259,8 @@ onMounted(load)
 }
 
 .points-board li.is-me {
-  background: #8ce06a10;
-  border-radius: 6px;
+  background: #e8b24a18;
+  border-radius: 0;
 }
 
 .points-board__rank {

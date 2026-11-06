@@ -123,7 +123,7 @@ const pixels = computed(() => {
     :height="16 * px"
     alt="时钟"
     draggable="false"
-  />
+  >
   <svg
     v-else
     class="mc-clock"
@@ -134,7 +134,15 @@ const pixels = computed(() => {
     role="img"
     aria-label="时钟"
   >
-    <rect v-for="(p, i) in pixels" :key="i" :x="p.x" :y="p.y" width="1" height="1" :fill="p.c" />
+    <rect
+      v-for="(p, i) in pixels"
+      :key="i"
+      :x="p.x"
+      :y="p.y"
+      width="1"
+      height="1"
+      :fill="p.c"
+    />
   </svg>
 </template>
 

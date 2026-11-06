@@ -22,18 +22,54 @@ watchEffect(() => {
 
 <template>
   <main class="site-page legal-page">
-    <nav class="tabs" aria-label="协议条款">
-      <router-link v-for="t in tabs" :key="t.key" :to="`/legal/${t.key}`" class="tab" active-class="active">{{ t.title }}</router-link>
+    <nav
+      class="tabs"
+      aria-label="协议条款"
+    >
+      <router-link
+        v-for="t in tabs"
+        :key="t.key"
+        :to="`/legal/${t.key}`"
+        class="tab"
+        active-class="active"
+      >{{ t.title }}</router-link>
     </nav>
 
-    <article v-if="doc" class="paper">
-      <p v-if="doc.draft" class="draft">【草案】本文尚未定稿，内容需服务器管理团队审定后发布。</p>
-      <PixelText class="title" :text="doc.title" :px="4" />
-      <p class="updated">更新日期：{{ doc.updated }}</p>
-      <p v-if="doc.intro" class="intro">{{ doc.intro }}</p>
-      <section v-for="s in doc.sections" :key="s.h">
+    <article
+      v-if="doc"
+      class="paper"
+    >
+      <p
+        v-if="doc.draft"
+        class="draft"
+      >
+        【草案】本文尚未定稿，内容需服务器管理团队审定后发布。
+      </p>
+      <PixelText
+        class="title"
+        :text="doc.title"
+        :px="4"
+      />
+      <p class="updated">
+        更新日期：{{ doc.updated }}
+      </p>
+      <p
+        v-if="doc.intro"
+        class="intro"
+      >
+        {{ doc.intro }}
+      </p>
+      <section
+        v-for="s in doc.sections"
+        :key="s.h"
+      >
         <h3>{{ s.h }}</h3>
-        <p v-for="(p, i) in s.p" :key="i">{{ p }}</p>
+        <p
+          v-for="(p, i) in s.p"
+          :key="i"
+        >
+          {{ p }}
+        </p>
       </section>
     </article>
   </main>

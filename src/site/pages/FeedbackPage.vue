@@ -8,7 +8,7 @@
  * 提交后：右页连同封底向左翻过来，把书合上 → 合上的书缩小、变成"书与笔"物品图标 →
  *         下方出现像素字"感谢您的反馈，我们将在7个兰猫日给您反馈"。
  * 手机竖屏两页上下排列，提交时改为整本书压扁收起，再变成物品图标。
- * 提交目前为本地模拟（services/feedback.js），后端接口建议见该文件注释。
+ * 后端接口尚未实现，当前禁用提交；接口建议见 services/feedback.js。
  */
 import { computed, nextTick, onBeforeUnmount, reactive, ref } from 'vue'
 import gsap from 'gsap'
@@ -16,8 +16,9 @@ import PixelText from '../components/PixelText.vue'
 import BookQuillIcon from '../components/feedback/BookQuillIcon.vue'
 import { account } from '../services/account'
 import {
-  CATEGORIES, MAX_CONTENT, MAX_SHOTS, MAX_SHOT_MB, submitFeedback, validateFeedback,
+  CATEGORIES, MAX_CONTENT, MAX_SHOTS, MAX_SHOT_MB, FEEDBACK_AVAILABLE, FEEDBACK_UNAVAILABLE, submitFeedback, validateFeedback,
 } from '../services/feedback'
+import { errorMessage } from '@/utils/errors'
 
 const THANKS = '感谢您的反馈，我们将在7个兰猫日给您反馈'
 
@@ -64,15 +65,19 @@ function removeShot(i) {
 }
 
 async function submit() {
+  if (!FEEDBACK_AVAILABLE) {
+    errors.value = { content: FEEDBACK_UNAVAILABLE }
+    return
+  }
   tried.value = true
   errors.value = validateFeedback(form)
   if (Object.keys(errors.value).length) return
   stage.value = 'sending'
   try {
     await submitFeedback(form, account.value?.uid ?? null)
-  } catch {
+  } catch (error) {
     stage.value = 'write'
-    errors.value = { content: '提交失败，请稍后再试' }
+    errors.value = { content: errorMessage(error, '提交失败，请稍后再试') }
     return
   }
   playClose()
@@ -119,16 +124,38 @@ onBeforeUnmount(() => form.shots.forEach((s) => URL.revokeObjectURL(s.url)))
 
 <template>
   <main class="site-page feedback-page">
+    <p
+      v-if="!FEEDBACK_AVAILABLE"
+      class="availability"
+      role="status"
+    >
+      {{ FEEDBACK_UNAVAILABLE }}
+    </p>
     <!-- 书 -->
-    <div v-if="stage !== 'done'" ref="bookRef" class="book" :class="{ busy: stage !== 'write' }">
+    <div
+      v-if="stage !== 'done'"
+      ref="bookRef"
+      class="book"
+      :class="{ busy: stage !== 'write' }"
+    >
       <!-- 左页 -->
       <section class="page left">
-        <PixelText class="ink" text="书与笔" :px="3" />
-        <p class="sub">写下你的反馈，我们会认真阅读每一页。</p>
+        <PixelText
+          class="ink"
+          text="书与笔"
+          :px="3"
+        />
+        <p class="sub">
+          写下你的反馈，我们会认真阅读每一页。
+        </p>
 
         <div class="field">
           <span class="lbl">分类 <em>*</em></span>
-          <div class="cats" role="radiogroup" aria-label="反馈分类">
+          <div
+            class="cats"
+            role="radiogroup"
+            aria-label="反馈分类"
+          >
             <button
               v-for="c in CATEGORIES"
               :key="c.value"
@@ -138,70 +165,173 @@ onBeforeUnmount(() => form.shots.forEach((s) => URL.revokeObjectURL(s.url)))
               :class="{ on: form.category === c.value }"
               :aria-checked="form.category === c.value"
               @click="pickCategory(c.value)"
-            >{{ c.label }}</button>
+            >
+              {{ c.label }}
+            </button>
           </div>
-          <span v-if="errors.category" class="err">{{ errors.category }}</span>
+          <span
+            v-if="errors.category"
+            class="err"
+          >{{ errors.category }}</span>
         </div>
 
-        <label v-if="form.category === 'other'" class="field">
+        <label
+          v-if="form.category === 'other'"
+          class="field"
+        >
           <span class="lbl">自定义分类 <em>*</em></span>
-          <input v-model="form.customCategory" class="paper-input" maxlength="16" placeholder="例如：活动、账号问题…" />
-          <span v-if="errors.customCategory" class="err">{{ errors.customCategory }}</span>
+          <input
+            v-model="form.customCategory"
+            class="paper-input"
+            maxlength="16"
+            placeholder="例如：活动、账号问题…"
+          >
+          <span
+            v-if="errors.customCategory"
+            class="err"
+          >{{ errors.customCategory }}</span>
         </label>
 
-        <label v-if="form.category === 'report'" class="field">
+        <label
+          v-if="form.category === 'report'"
+          class="field"
+        >
           <span class="lbl">被举报账号 UID（选填）</span>
-          <input v-model="form.reportedUid" class="paper-input" inputmode="numeric" maxlength="12" placeholder="只填数字" />
-          <span v-if="errors.reportedUid" class="err">{{ errors.reportedUid }}</span>
+          <input
+            v-model="form.reportedUid"
+            class="paper-input"
+            inputmode="numeric"
+            maxlength="12"
+            placeholder="只填数字"
+          >
+          <span
+            v-if="errors.reportedUid"
+            class="err"
+          >{{ errors.reportedUid }}</span>
         </label>
 
         <div class="field">
           <span class="lbl">截图（选填，最多 {{ MAX_SHOTS }} 张，每张 ≤ {{ MAX_SHOT_MB }}MB）</span>
           <div class="shots">
-            <div v-for="(s, i) in form.shots" :key="s.url" class="shot">
-              <img :src="s.url" :alt="s.file.name" />
-              <button type="button" class="x" aria-label="移除这张截图" @click="removeShot(i)">×</button>
+            <div
+              v-for="(s, i) in form.shots"
+              :key="s.url"
+              class="shot"
+            >
+              <img
+                :src="s.url"
+                :alt="s.file.name"
+              >
+              <button
+                type="button"
+                class="x"
+                aria-label="移除这张截图"
+                @click="removeShot(i)"
+              >
+                ×
+              </button>
             </div>
-            <label v-if="form.shots.length < MAX_SHOTS" class="shot add">
+            <label
+              v-if="form.shots.length < MAX_SHOTS"
+              class="shot add"
+            >
               <span>+</span>
-              <input type="file" accept="image/*" multiple hidden @change="addShots" />
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                @change="addShots"
+              >
             </label>
           </div>
-          <span v-if="shotMsg" class="err">{{ shotMsg }}</span>
+          <span
+            v-if="shotMsg"
+            class="err"
+          >{{ shotMsg }}</span>
         </div>
       </section>
 
       <!-- 右页（能翻动的一页：正面是内容，背面是封底） -->
-      <div ref="leafRef" class="leaf">
+      <div
+        ref="leafRef"
+        class="leaf"
+      >
         <section class="page right leaf-front">
           <div class="field grow">
             <span class="lbl">反馈内容 <em>*</em> <span class="count">{{ count }}/{{ MAX_CONTENT }}</span></span>
-            <textarea v-model="form.content" class="lined" :maxlength="MAX_CONTENT" placeholder="请详细描述你遇到的问题或建议…" />
-            <span v-if="errors.content" class="err">{{ errors.content }}</span>
+            <textarea
+              v-model="form.content"
+              class="lined"
+              :maxlength="MAX_CONTENT"
+              placeholder="请详细描述你遇到的问题或建议…"
+            />
+            <span
+              v-if="errors.content"
+              class="err"
+            >{{ errors.content }}</span>
           </div>
           <div class="sign">
             <span>署名：{{ signer }}</span>
-            <button type="button" class="mc-btn" :disabled="stage !== 'write'" @click="submit">
-              <PixelText :text="stage === 'sending' ? '提交中…' : '署名并提交'" :px="2" />
+            <button
+              type="button"
+              class="mc-btn"
+              :disabled="!FEEDBACK_AVAILABLE || stage !== 'write'"
+              @click="submit"
+            >
+              <PixelText
+                :text="stage === 'sending' ? '提交中…' : '署名并提交'"
+                :px="2"
+              />
             </button>
           </div>
         </section>
-        <div class="leaf-back" aria-hidden="true">
+        <div
+          class="leaf-back"
+          aria-hidden="true"
+        >
           <span class="emboss">MCREATOPIA</span>
         </div>
       </div>
     </div>
 
     <!-- 提交完成：书与笔物品 + 感谢文字 -->
-    <div v-else ref="doneRef" class="done">
-      <BookQuillIcon class="item" :size="160" />
-      <PixelText class="thanks" :text="THANKS" :px="2" />
-      <button type="button" class="mc-btn is-ghost again" @click="again"><PixelText text="再写一份" :px="2" /></button>
+    <div
+      v-else
+      ref="doneRef"
+      class="done"
+    >
+      <BookQuillIcon
+        class="item"
+        :size="160"
+      />
+      <PixelText
+        class="thanks"
+        :text="THANKS"
+        :px="2"
+      />
+      <button
+        type="button"
+        class="mc-btn is-ghost again"
+        @click="again"
+      >
+        <PixelText
+          text="再写一份"
+          :px="2"
+        />
+      </button>
     </div>
   </main>
 </template>
 
 <style scoped>
+.availability {
+  width: min(980px, 100%);
+  margin: 0 0 28px;
+  color: var(--brass-hi);
+  font-family: var(--font-body);
+  text-align: center;
+}
 .feedback-page {
   display: grid;
   place-items: center;

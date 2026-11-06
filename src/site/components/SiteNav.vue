@@ -78,29 +78,61 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <header ref="navRef" class="site-nav" :class="{ 'is-hidden': !show, 'is-scrolled': scrolled }">
-    <router-link to="/" class="nav-brand" aria-label="MCREATOPIA">
-      <img class="nav-logo" :src="logoUrl" alt="" />
+  <header
+    ref="navRef"
+    class="site-nav"
+    :class="{ 'is-hidden': !show, 'is-scrolled': scrolled }"
+  >
+    <router-link
+      to="/"
+      class="nav-brand"
+      aria-label="MCREATOPIA"
+    >
+      <img
+        class="nav-logo"
+        :src="logoUrl"
+        alt=""
+      >
       <svg
         class="nav-wordmark"
         :viewBox="`0 0 ${mark.width} ${GLYPH_H}`"
         shape-rendering="crispEdges"
         aria-hidden="true"
       >
-        <path :d="mark.d" fill="currentColor" />
+        <path
+          :d="mark.d"
+          fill="currentColor"
+        />
       </svg>
     </router-link>
 
-    <nav class="nav-links" aria-label="主导航">
-      <router-link v-for="l in LINKS" :key="l.to" :to="l.to" class="nav-link">
-        <PixelText :text="t(l.key)" :px="2" />
+    <nav
+      class="nav-links"
+      aria-label="主导航"
+    >
+      <router-link
+        v-for="l in LINKS"
+        :key="l.to"
+        :to="l.to"
+        class="nav-link"
+      >
+        <PixelText
+          :text="t(l.key)"
+          :px="2"
+        />
       </router-link>
     </nav>
 
     <div class="nav-time">
       <LanguagePicker />
-      <McClock :date="now" :px="2" />
-      <PixelText :text="timeText" :px="2" />
+      <McClock
+        :date="now"
+        :px="2"
+      />
+      <PixelText
+        :text="timeText"
+        :px="2"
+      />
     </div>
   </header>
 </template>

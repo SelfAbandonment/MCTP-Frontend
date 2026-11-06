@@ -13,7 +13,10 @@ defineProps({
 
 <template>
   <main class="placeholder-page">
-    <PixelText :text="title" :px="5" />
+    <PixelText
+      :text="title"
+      :px="5"
+    />
     <p>{{ note }}</p>
   </main>
 </template>

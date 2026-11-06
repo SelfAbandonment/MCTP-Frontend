@@ -42,7 +42,12 @@ const h = computed(() => props.icon.map.length || 16)
     :aria-label="label || undefined"
     :aria-hidden="label ? undefined : 'true'"
   >
-    <path v-for="l in layers" :key="l.fill" :d="l.d" :fill="l.fill" />
+    <path
+      v-for="l in layers"
+      :key="l.fill"
+      :d="l.d"
+      :fill="l.fill"
+    />
   </svg>
 </template>
 

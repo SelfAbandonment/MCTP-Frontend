@@ -30,7 +30,10 @@ const d = computed(() => cellsToPath(raster.value.cells))
     role="img"
     :aria-label="text"
   >
-    <path :d="d" fill="currentColor" />
+    <path
+      :d="d"
+      fill="currentColor"
+    />
   </svg>
 </template>
 

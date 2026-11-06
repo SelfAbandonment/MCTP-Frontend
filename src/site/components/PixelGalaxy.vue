@@ -345,7 +345,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <canvas ref="canvasRef" class="pixel-galaxy" aria-hidden="true" />
+  <canvas
+    ref="canvasRef"
+    class="pixel-galaxy"
+    aria-hidden="true"
+  />
 </template>
 
 <style scoped>

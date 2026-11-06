@@ -76,15 +76,32 @@ const STAR = 'M3 0h1v2h3v1h-1v1h-1v1h1v2h-1v-1h-1v-1h-1v1h-1v1h-1v-2h1v-1h-1v-1h
 </script>
 
 <template>
-  <div class="fortune" :class="{ 'is-locked': locked }">
+  <div
+    class="fortune"
+    :class="{ 'is-locked': locked }"
+  >
     <div class="head">
-      <PixelText text="今日运势" :px="3" />
+      <PixelText
+        text="今日运势"
+        :px="3"
+      />
       <span class="date">{{ today }}</span>
     </div>
 
     <!-- ① 未测：齿轮按钮 -->
-    <button v-if="phase !== 'done'" type="button" class="roll" :class="{ spinning: phase === 'rolling' }" @click="roll">
-      <svg class="gear" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+    <button
+      v-if="phase !== 'done'"
+      type="button"
+      class="roll"
+      :class="{ spinning: phase === 'rolling' }"
+      @click="roll"
+    >
+      <svg
+        class="gear"
+        viewBox="0 0 16 16"
+        shape-rendering="crispEdges"
+        aria-hidden="true"
+      >
         <path
           d="M6 0h4v2h1v1h1v-1h2v2h-1v1h1v1h2v4h-2v1h-1v1h1v2h-2v-1h-1v1h-1v2h-4v-2h-1v-1h-1v1h-2v-2h1v-1h-1v-1h-2v-4h2v-1h1v-1h-1v-2h2v1h1v-1h1zM6 6v4h4v-4z"
           fill="var(--brass)"
@@ -92,15 +109,30 @@ const STAR = 'M3 0h1v2h3v1h-1v1h-1v1h1v2h-1v-1h-1v-1h-1v1h-1v1h-1v-2h1v-1h-1v-1h
           stroke-width="0.5"
         />
       </svg>
-      <PixelText class="roll-text" :text="phase === 'rolling' ? '齿轮转动中…' : '点击测一测今日运势'" :px="2" />
+      <PixelText
+        class="roll-text"
+        :text="phase === 'rolling' ? '齿轮转动中…' : '点击测一测今日运势'"
+        :px="2"
+      />
     </button>
 
     <!-- ② 结果 -->
-    <div ref="rowsRef" class="result" :class="{ ghost: phase !== 'done' }">
+    <div
+      ref="rowsRef"
+      class="result"
+      :class="{ ghost: phase !== 'done' }"
+    >
       <ul class="aspects">
-        <li v-for="(a, i) in fortune.aspects" :key="a.key" data-row>
+        <li
+          v-for="(a, i) in fortune.aspects"
+          :key="a.key"
+          data-row
+        >
           <span class="label">{{ a.label }}</span>
-          <span class="stars" :aria-label="`${a.stars} 星`">
+          <span
+            class="stars"
+            :aria-label="`${a.stars} 星`"
+          >
             <svg
               v-for="k in 5"
               :key="k"
@@ -115,16 +147,29 @@ const STAR = 'M3 0h1v2h3v1h-1v1h-1v1h1v2h-1v-1h-1v-1h-1v1h-1v1h-1v-2h1v-1h-1v-1h
           <span class="line">{{ phase === 'done' ? a.line : '……' }}</span>
         </li>
       </ul>
-      <div class="extras" data-row>
+      <div
+        class="extras"
+        data-row
+      >
         <div class="chip">
           <span class="k">幸运色</span>
-          <i class="swatch" :style="{ background: fortune.color.hex }" />
+          <i
+            class="swatch"
+            :style="{ background: fortune.color.hex }"
+          />
           <span>{{ fortune.color.name }}</span>
         </div>
-        <div class="chip"><span class="k">幸运数字</span><span class="num">{{ fortune.number }}</span></div>
-        <div class="chip"><span class="k">幸运方块</span><span>{{ fortune.block }}</span></div>
+        <div class="chip">
+          <span class="k">幸运数字</span><span class="num">{{ fortune.number }}</span>
+        </div>
+        <div class="chip">
+          <span class="k">幸运方块</span><span>{{ fortune.block }}</span>
+        </div>
       </div>
-      <div class="dos" data-row>
+      <div
+        class="dos"
+        data-row
+      >
         <p><b class="yi">宜</b>{{ fortune.good.join('、') }}</p>
         <p><b class="ji">忌</b>{{ fortune.bad.join('、') }}</p>
       </div>
@@ -141,13 +186,36 @@ const STAR = 'M3 0h1v2h3v1h-1v1h-1v1h1v2h-1v-1h-1v-1h-1v1h-1v1h-1v-2h1v-1h-1v-1h
     />
 
     <!-- 未登录遮罩 -->
-    <div v-if="locked" class="lock">
-      <svg class="lock-icon" viewBox="0 0 10 12" shape-rendering="crispEdges" aria-hidden="true">
-        <path d="M3 0h4v1h1v4h-1v-3h-1v-1h-2v1h-1v3h-1v-4h1z M1 5h8v1h1v5h-1v1h-8v-1h-1v-5h1z" fill="var(--brass)" />
-        <path d="M4 7h2v2h-1v1h-1z" fill="var(--outline)" />
+    <div
+      v-if="locked"
+      class="lock"
+    >
+      <svg
+        class="lock-icon"
+        viewBox="0 0 10 12"
+        shape-rendering="crispEdges"
+        aria-hidden="true"
+      >
+        <path
+          d="M3 0h4v1h1v4h-1v-3h-1v-1h-2v1h-1v3h-1v-4h1z M1 5h8v1h1v5h-1v1h-8v-1h-1v-5h1z"
+          fill="var(--brass)"
+        />
+        <path
+          d="M4 7h2v2h-1v1h-1z"
+          fill="var(--outline)"
+        />
       </svg>
-      <PixelText text="登录后查看今日运势" :px="2" />
-      <router-link to="/login" class="mc-btn"><PixelText text="去登录" :px="2" /></router-link>
+      <PixelText
+        text="登录后查看今日运势"
+        :px="2"
+      />
+      <router-link
+        to="/login"
+        class="mc-btn"
+      ><PixelText
+        text="去登录"
+        :px="2"
+      /></router-link>
     </div>
   </div>
 </template>

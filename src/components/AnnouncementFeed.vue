@@ -199,17 +199,17 @@ onMounted(() => load())
   min-height: 34px;
   padding: 6px 14px;
   border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  background: transparent;
-  font-size: 11px;
+  border-radius: 0;
+  background: var(--casing-lo);
+  font-size: 14px;
   color: var(--text-soft);
   transition: border-color 160ms, color 160ms, background 160ms;
 }
 .feed-chip:hover:not(:disabled) { border-color: var(--brand); color: var(--text-main); }
-.feed-chip[aria-pressed='true'] { border-color: var(--brand); background: #8ce06a14; color: var(--brand); }
+.feed-chip[aria-pressed='true'] { border-color: var(--outline); background: var(--brass); color: var(--ink); }
 
 .feed-message { padding: 28px 0; font-size: 12px; color: var(--text-soft); }
-.announcement-entry { border-bottom: 1px solid var(--line); }
+.announcement-entry { border: 2px solid var(--outline); background: var(--panel); margin-top: 16px; box-shadow: inset 2px 2px 0 var(--casing-hi); }
 .announcement-entry summary {
   display: flex;
   align-items: center;

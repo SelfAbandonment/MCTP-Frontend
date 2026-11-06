@@ -73,39 +73,122 @@ const vbW = computed(() => totalW.value + 2)
   >
     <defs>
       <!-- 暗黄铜（未加载）：低饱和、偏暗 -->
-      <linearGradient id="cw-dull" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#b59a5c" />
-        <stop offset="0.5" stop-color="#8f7440" />
-        <stop offset="1" stop-color="#5f4824" />
+      <linearGradient
+        id="cw-dull"
+        x1="0"
+        y1="0"
+        x2="0"
+        y2="1"
+      >
+        <stop
+          offset="0"
+          stop-color="#b59a5c"
+        />
+        <stop
+          offset="0.5"
+          stop-color="#8f7440"
+        />
+        <stop
+          offset="1"
+          stop-color="#5f4824"
+        />
       </linearGradient>
       <!-- 抛光黄铜（已加载）：浅黄 → 黄铜 → 橙棕 -->
-      <linearGradient id="cw-brass" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#fff4b8" />
-        <stop offset="0.3" stop-color="#fcd25a" />
-        <stop offset="0.68" stop-color="#e59a32" />
-        <stop offset="1" stop-color="#b0611f" />
+      <linearGradient
+        id="cw-brass"
+        x1="0"
+        y1="0"
+        x2="0"
+        y2="1"
+      >
+        <stop
+          offset="0"
+          stop-color="#fff4b8"
+        />
+        <stop
+          offset="0.3"
+          stop-color="#fcd25a"
+        />
+        <stop
+          offset="0.68"
+          stop-color="#e59a32"
+        />
+        <stop
+          offset="1"
+          stop-color="#b0611f"
+        />
       </linearGradient>
-      <linearGradient id="cw-shimmer" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" stop-color="#fff" stop-opacity="0" />
-        <stop offset="0.7" stop-color="#fffbe6" stop-opacity="0.95" />
-        <stop offset="1" stop-color="#fff" stop-opacity="0" />
+      <linearGradient
+        id="cw-shimmer"
+        x1="0"
+        y1="0"
+        x2="1"
+        y2="0"
+      >
+        <stop
+          offset="0"
+          stop-color="#fff"
+          stop-opacity="0"
+        />
+        <stop
+          offset="0.7"
+          stop-color="#fffbe6"
+          stop-opacity="0.95"
+        />
+        <stop
+          offset="1"
+          stop-color="#fff"
+          stop-opacity="0"
+        />
       </linearGradient>
-      <filter id="cw-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <filter
+        id="cw-glow"
+        x="-50%"
+        y="-50%"
+        width="200%"
+        height="200%"
+      >
         <feGaussianBlur stdDeviation="0.6" />
       </filter>
-      <clipPath v-for="l in letters" :id="`cw-shape-${l.i}`" :key="'s' + l.i">
+      <clipPath
+        v-for="l in letters"
+        :id="`cw-shape-${l.i}`"
+        :key="'s' + l.i"
+      >
         <path :d="l.d" />
       </clipPath>
-      <clipPath v-for="l in letters" :id="`cw-prog-${l.i}`" :key="'p' + l.i">
-        <rect x="-2" y="-2" :width="fillW(l.x) > 0 ? fillW(l.x) + 2 : 0" :height="GLYPH_H + 5" />
+      <clipPath
+        v-for="l in letters"
+        :id="`cw-prog-${l.i}`"
+        :key="'p' + l.i"
+      >
+        <rect
+          x="-2"
+          y="-2"
+          :width="fillW(l.x) > 0 ? fillW(l.x) + 2 : 0"
+          :height="GLYPH_H + 5"
+        />
       </clipPath>
     </defs>
 
-    <g v-for="l in letters" :key="l.i" :transform="`translate(${l.x} 0)`">
-      <g class="float" :style="{ animationDelay: `${-l.i * 0.37}s` }">
+    <g
+      v-for="l in letters"
+      :key="l.i"
+      :transform="`translate(${l.x} 0)`"
+    >
+      <g
+        class="float"
+        :style="{ animationDelay: `${-l.i * 0.37}s` }"
+      >
         <!-- 金色外辉光（只在已加载部分出现） -->
         <g :clip-path="`url(#cw-prog-${l.i})`">
-          <path :d="l.d" :transform="`translate(0 ${DY * DEPTH_LAYERS * 0.5})`" fill="#ffb43c" filter="url(#cw-glow)" opacity="0.7" />
+          <path
+            :d="l.d"
+            :transform="`translate(0 ${DY * DEPTH_LAYERS * 0.5})`"
+            fill="#ffb43c"
+            filter="url(#cw-glow)"
+            opacity="0.7"
+          />
         </g>
         <!-- 外描边：正面与每层厚度都加粗描边，合起来是一整块铸件的轮廓 -->
         <path
@@ -128,12 +211,33 @@ const vbW = computed(() => totalW.value + 2)
           shape-rendering="crispEdges"
         />
         <!-- 正面：未加载的暗黄铜 -->
-        <path :d="l.d" fill="url(#cw-dull)" shape-rendering="crispEdges" />
-        <path :d="l.light" fill="#e6d3a0" opacity="0.55" shape-rendering="crispEdges" />
-        <path :d="l.dark" fill="#3e2c14" opacity="0.5" shape-rendering="crispEdges" />
+        <path
+          :d="l.d"
+          fill="url(#cw-dull)"
+          shape-rendering="crispEdges"
+        />
+        <path
+          :d="l.light"
+          fill="#e6d3a0"
+          opacity="0.55"
+          shape-rendering="crispEdges"
+        />
+        <path
+          :d="l.dark"
+          fill="#3e2c14"
+          opacity="0.5"
+          shape-rendering="crispEdges"
+        />
         <!-- 正面：已加载的抛光黄铜（以字形为遮罩，宽度 = 进度） -->
         <g :clip-path="`url(#cw-shape-${l.i})`">
-          <rect x="0" y="0" :width="fillW(l.x)" :height="GLYPH_H" fill="url(#cw-brass)" shape-rendering="crispEdges" />
+          <rect
+            x="0"
+            y="0"
+            :width="fillW(l.x)"
+            :height="GLYPH_H"
+            fill="url(#cw-brass)"
+            shape-rendering="crispEdges"
+          />
           <rect
             v-if="fillW(l.x) > 0 && fillW(l.x) < GLYPH_W"
             :x="fillW(l.x) - 1.4"
@@ -144,8 +248,18 @@ const vbW = computed(() => totalW.value + 2)
           />
         </g>
         <g :clip-path="`url(#cw-prog-${l.i})`">
-          <path :d="l.light" fill="#fffbe0" opacity="0.8" shape-rendering="crispEdges" />
-          <path :d="l.dark" fill="#8a4512" opacity="0.6" shape-rendering="crispEdges" />
+          <path
+            :d="l.light"
+            fill="#fffbe0"
+            opacity="0.8"
+            shape-rendering="crispEdges"
+          />
+          <path
+            :d="l.dark"
+            fill="#8a4512"
+            opacity="0.6"
+            shape-rendering="crispEdges"
+          />
         </g>
       </g>
     </g>

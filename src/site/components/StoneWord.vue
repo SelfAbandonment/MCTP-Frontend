@@ -78,32 +78,104 @@ const vbW = computed(() => totalW.value + 1.6)
     :aria-label="text"
   >
     <defs>
-      <pattern id="stone-tex" patternUnits="userSpaceOnUse" width="2" height="2">
-        <rect v-for="(c, k) in stoneCells" :key="k" :x="c.x" :y="c.y" width="0.25" height="0.25" :fill="c.c" />
+      <pattern
+        id="stone-tex"
+        patternUnits="userSpaceOnUse"
+        width="2"
+        height="2"
+      >
+        <rect
+          v-for="(c, k) in stoneCells"
+          :key="k"
+          :x="c.x"
+          :y="c.y"
+          width="0.25"
+          height="0.25"
+          :fill="c.c"
+        />
       </pattern>
-      <linearGradient id="gold-fill" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#fff3b0" />
-        <stop offset="0.45" stop-color="#ffc93c" />
-        <stop offset="1" stop-color="#d48a0c" />
+      <linearGradient
+        id="gold-fill"
+        x1="0"
+        y1="0"
+        x2="0"
+        y2="1"
+      >
+        <stop
+          offset="0"
+          stop-color="#fff3b0"
+        />
+        <stop
+          offset="0.45"
+          stop-color="#ffc93c"
+        />
+        <stop
+          offset="1"
+          stop-color="#d48a0c"
+        />
       </linearGradient>
-      <linearGradient id="gold-shimmer" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" stop-color="#fff" stop-opacity="0" />
-        <stop offset="0.7" stop-color="#fffbe6" stop-opacity="0.95" />
-        <stop offset="1" stop-color="#fff" stop-opacity="0" />
+      <linearGradient
+        id="gold-shimmer"
+        x1="0"
+        y1="0"
+        x2="1"
+        y2="0"
+      >
+        <stop
+          offset="0"
+          stop-color="#fff"
+          stop-opacity="0"
+        />
+        <stop
+          offset="0.7"
+          stop-color="#fffbe6"
+          stop-opacity="0.95"
+        />
+        <stop
+          offset="1"
+          stop-color="#fff"
+          stop-opacity="0"
+        />
       </linearGradient>
-      <filter id="gold-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <filter
+        id="gold-glow"
+        x="-50%"
+        y="-50%"
+        width="200%"
+        height="200%"
+      >
         <feGaussianBlur stdDeviation="0.55" />
       </filter>
-      <clipPath v-for="l in letters" :id="`shape-${l.i}`" :key="'s' + l.i">
+      <clipPath
+        v-for="l in letters"
+        :id="`shape-${l.i}`"
+        :key="'s' + l.i"
+      >
         <path :d="l.d" />
       </clipPath>
-      <clipPath v-for="l in letters" :id="`prog-${l.i}`" :key="'p' + l.i">
-        <rect x="-2" y="-2" :width="fillW(l.x) > 0 ? fillW(l.x) + 2 : 0" :height="GLYPH_H + 4" />
+      <clipPath
+        v-for="l in letters"
+        :id="`prog-${l.i}`"
+        :key="'p' + l.i"
+      >
+        <rect
+          x="-2"
+          y="-2"
+          :width="fillW(l.x) > 0 ? fillW(l.x) + 2 : 0"
+          :height="GLYPH_H + 4"
+        />
       </clipPath>
     </defs>
 
-    <g v-for="l in letters" :key="l.i" :transform="`translate(${l.x} 0)`">
-      <g class="float" :style="{ animationDelay: `${-l.i * 0.37}s` }">
+    <g
+      v-for="l in letters"
+      :key="l.i"
+      :transform="`translate(${l.x} 0)`"
+    >
+      <g
+        class="float"
+        :style="{ animationDelay: `${-l.i * 0.37}s` }"
+      >
         <!-- 侧面挤出（先画最深的，再往前叠） -->
         <path
           v-for="k in DEPTH_LAYERS"
@@ -113,16 +185,41 @@ const vbW = computed(() => totalW.value + 1.6)
           :transform="`translate(${DX * (DEPTH_LAYERS - k + 1)} ${DY * (DEPTH_LAYERS - k + 1)})`"
         />
         <!-- 正面岩石纹理 + 倒角 -->
-        <path :d="l.d" fill="url(#stone-tex)" />
-        <path :d="l.light" fill="#ffffff" opacity="0.55" />
-        <path :d="l.dark" fill="#8a8a84" opacity="0.7" />
+        <path
+          :d="l.d"
+          fill="url(#stone-tex)"
+        />
+        <path
+          :d="l.light"
+          fill="#ffffff"
+          opacity="0.55"
+        />
+        <path
+          :d="l.dark"
+          fill="#8a8a84"
+          opacity="0.7"
+        />
         <!-- 金光：外侧辉光（只受进度裁切） -->
-        <g :clip-path="`url(#prog-${l.i})`" class="glow">
-          <path :d="l.d" fill="#ffc93c" filter="url(#gold-glow)" opacity="0.75" />
+        <g
+          :clip-path="`url(#prog-${l.i})`"
+          class="glow"
+        >
+          <path
+            :d="l.d"
+            fill="#ffc93c"
+            filter="url(#gold-glow)"
+            opacity="0.75"
+          />
         </g>
         <!-- 金光：字形内部（以像素字为遮罩） -->
         <g :clip-path="`url(#shape-${l.i})`">
-          <rect x="0" y="0" :width="fillW(l.x)" :height="GLYPH_H" fill="url(#gold-fill)" />
+          <rect
+            x="0"
+            y="0"
+            :width="fillW(l.x)"
+            :height="GLYPH_H"
+            fill="url(#gold-fill)"
+          />
           <rect
             v-if="fillW(l.x) > 0 && fillW(l.x) < GLYPH_W"
             :x="fillW(l.x) - 1.4"
@@ -134,8 +231,16 @@ const vbW = computed(() => totalW.value + 1.6)
         </g>
         <!-- 金色区域上的倒角保留，让金色仍像方块 -->
         <g :clip-path="`url(#prog-${l.i})`">
-          <path :d="l.light" fill="#fffbe0" opacity="0.6" />
-          <path :d="l.dark" fill="#9c5f00" opacity="0.55" />
+          <path
+            :d="l.light"
+            fill="#fffbe0"
+            opacity="0.6"
+          />
+          <path
+            :d="l.dark"
+            fill="#9c5f00"
+            opacity="0.55"
+          />
         </g>
       </g>
     </g>

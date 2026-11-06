@@ -30,11 +30,20 @@ defineExpose({ prepare, unroll })
 
 <template>
   <div class="scroll">
-    <i class="roller" aria-hidden="true" />
-    <div ref="paperRef" class="paper">
+    <i
+      class="roller"
+      aria-hidden="true"
+    />
+    <div
+      ref="paperRef"
+      class="paper"
+    >
       <slot />
     </div>
-    <i class="roller" aria-hidden="true" />
+    <i
+      class="roller"
+      aria-hidden="true"
+    />
   </div>
 </template>
 

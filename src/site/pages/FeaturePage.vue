@@ -25,30 +25,65 @@ watchEffect(() => {
 
 <template>
   <main class="site-page feature-page">
-    <CreatePanel v-if="feature" class="box">
+    <CreatePanel
+      v-if="feature"
+      class="box"
+    >
       <div class="inner">
-        <PixelIcon class="icon" :icon="feature.icon" :size="128" :label="feature.name" />
+        <PixelIcon
+          class="icon"
+          :icon="feature.icon"
+          :size="128"
+          :label="feature.name"
+        />
         <div class="head">
           <span class="en">{{ feature.en }}</span>
-          <PixelText :text="feature.name" :px="4" />
-          <p class="desc">{{ feature.desc }}</p>
+          <PixelText
+            :text="feature.name"
+            :px="4"
+          />
+          <p class="desc">
+            {{ feature.desc }}
+          </p>
         </div>
 
         <ul class="rules">
-          <li v-if="feature.upload">上传需要先登录<span v-if="!isLoggedIn" class="warn">（你当前未登录）</span></li>
-          <li v-if="feature.review">上传的内容需要管理员审核通过后才会公开</li>
-          <li v-if="!feature.upload">浏览无需登录</li>
+          <li v-if="feature.upload">
+            上传需要先登录<span
+              v-if="!isLoggedIn"
+              class="warn"
+            >（你当前未登录）</span>
+          </li>
+          <li v-if="feature.review">
+            上传的内容需要管理员审核通过后才会公开
+          </li>
+          <li v-if="!feature.upload">
+            浏览无需登录
+          </li>
         </ul>
 
         <section class="plans">
           <h3>计划中的功能</h3>
           <ol>
-            <li v-for="p in feature.plans" :key="p">{{ p }}</li>
+            <li
+              v-for="p in feature.plans"
+              :key="p"
+            >
+              {{ p }}
+            </li>
           </ol>
         </section>
 
-        <p class="todo">【待开发】此功能尚未上线，敬请期待。</p>
-        <router-link to="/home" class="mc-btn is-ghost"><PixelText text="← 返回主页面" :px="2" /></router-link>
+        <p class="todo">
+          【待开发】此功能尚未上线，敬请期待。
+        </p>
+        <router-link
+          to="/home"
+          class="mc-btn is-ghost"
+        ><PixelText
+          text="← 返回主页面"
+          :px="2"
+        /></router-link>
       </div>
     </CreatePanel>
   </main>

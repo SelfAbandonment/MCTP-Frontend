@@ -51,15 +51,58 @@ onMounted(() => {
 
 <template>
   <figure class="astrolabe">
-    <svg viewBox="0 0 200 200" role="img" :aria-label="`星盘：太阳${chart.sun.sign.zh}，月亮${chart.moon.sign.zh}，上升${chart.asc.sign.zh}`">
+    <svg
+      viewBox="0 0 200 200"
+      role="img"
+      :aria-label="`星盘：太阳${chart.sun.sign.zh}，月亮${chart.moon.sign.zh}，上升${chart.asc.sign.zh}`"
+    >
       <!-- 盘面 -->
-      <circle :cx="C" :cy="C" r="98" fill="#16141f" stroke="var(--outline)" stroke-width="3" />
-      <circle :cx="C" :cy="C" r="96" fill="none" stroke="var(--brass)" stroke-width="2" />
-      <circle :cx="C" :cy="C" r="74" fill="#1d1a2a" stroke="var(--brass-mid)" stroke-width="1.5" />
-      <circle :cx="C" :cy="C" r="20" fill="none" stroke="rgba(255,201,60,.35)" stroke-width="1" stroke-dasharray="2 3" />
+      <circle
+        :cx="C"
+        :cy="C"
+        r="98"
+        fill="#16141f"
+        stroke="var(--outline)"
+        stroke-width="3"
+      />
+      <circle
+        :cx="C"
+        :cy="C"
+        r="96"
+        fill="none"
+        stroke="var(--brass)"
+        stroke-width="2"
+      />
+      <circle
+        :cx="C"
+        :cy="C"
+        r="74"
+        fill="#1d1a2a"
+        stroke="var(--brass-mid)"
+        stroke-width="1.5"
+      />
+      <circle
+        :cx="C"
+        :cy="C"
+        r="20"
+        fill="none"
+        stroke="rgba(255,201,60,.35)"
+        stroke-width="1"
+        stroke-dasharray="2 3"
+      />
       <!-- 十二宫分格 + 星座符号 -->
-      <g v-for="seg in segments" :key="seg.i">
-        <line :x1="seg.a.x" :y1="seg.a.y" :x2="seg.b.x" :y2="seg.b.y" stroke="var(--brass-mid)" stroke-width="1" />
+      <g
+        v-for="seg in segments"
+        :key="seg.i"
+      >
+        <line
+          :x1="seg.a.x"
+          :y1="seg.a.y"
+          :x2="seg.b.x"
+          :y2="seg.b.y"
+          stroke="var(--brass-mid)"
+          stroke-width="1"
+        />
         <text
           :x="seg.label.x"
           :y="seg.label.y"
@@ -71,16 +114,61 @@ onMounted(() => {
       </g>
       <!-- 上升 / 下降轴 -->
       <g :opacity="anim.marks">
-        <line :x1="ascA.x" :y1="ascA.y" :x2="ascB.x" :y2="ascB.y" stroke="rgba(255,255,255,.35)" stroke-width="1" stroke-dasharray="3 2" />
-        <text :x="ascA.x + 4" :y="ascA.y - 5" class="asc">ASC</text>
-        <g v-for="m in marks" :key="m.key">
-          <line :x1="C" :y1="C" :x2="m.p.x" :y2="m.p.y" :stroke="m.color" stroke-opacity="0.35" stroke-width="1" />
-          <circle :cx="m.p.x" :cy="m.p.y" r="8" fill="#0f0d17" :stroke="m.color" stroke-width="1.5" />
-          <text :x="m.p.x" :y="m.p.y" class="mark" :fill="m.color" text-anchor="middle" dominant-baseline="central">{{ m.sym }}<title>{{ m.title }}</title></text>
+        <line
+          :x1="ascA.x"
+          :y1="ascA.y"
+          :x2="ascB.x"
+          :y2="ascB.y"
+          stroke="rgba(255,255,255,.35)"
+          stroke-width="1"
+          stroke-dasharray="3 2"
+        />
+        <text
+          :x="ascA.x + 4"
+          :y="ascA.y - 5"
+          class="asc"
+        >ASC</text>
+        <g
+          v-for="m in marks"
+          :key="m.key"
+        >
+          <line
+            :x1="C"
+            :y1="C"
+            :x2="m.p.x"
+            :y2="m.p.y"
+            :stroke="m.color"
+            stroke-opacity="0.35"
+            stroke-width="1"
+          />
+          <circle
+            :cx="m.p.x"
+            :cy="m.p.y"
+            r="8"
+            fill="#0f0d17"
+            :stroke="m.color"
+            stroke-width="1.5"
+          />
+          <text
+            :x="m.p.x"
+            :y="m.p.y"
+            class="mark"
+            :fill="m.color"
+            text-anchor="middle"
+            dominant-baseline="central"
+          >{{ m.sym }}<title>{{ m.title }}</title></text>
         </g>
       </g>
       <!-- 中心铆钉 -->
-      <rect :x="C - 3" :y="C - 3" width="6" height="6" fill="var(--brass)" stroke="var(--outline)" stroke-width="1" />
+      <rect
+        :x="C - 3"
+        :y="C - 3"
+        width="6"
+        height="6"
+        fill="var(--brass)"
+        stroke="var(--outline)"
+        stroke-width="1"
+      />
     </svg>
     <figcaption>
       <span>☀ {{ chart.sun.sign.zh }}</span>

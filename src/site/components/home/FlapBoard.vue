@@ -88,15 +88,44 @@ watch(() => [props.items.length, props.preview], restart)
 </script>
 
 <template>
-  <div ref="boardRef" class="flap-board">
+  <div
+    ref="boardRef"
+    class="flap-board"
+  >
     <!-- 显示屏 -->
-    <div v-if="current" class="screen" role="region" aria-roledescription="公告轮播" :aria-label="`公告 ${index + 1} / ${items.length}`">
-      <FlapImage class="cover" :src="current.cover" />
+    <div
+      v-if="current"
+      class="screen"
+      role="region"
+      aria-roledescription="公告轮播"
+      :aria-label="`公告 ${index + 1} / ${items.length}`"
+    >
+      <FlapImage
+        class="cover"
+        :src="current.cover"
+      />
       <div class="copy">
-        <FlapText class="title" :text="current.title || ' '" :size="38" />
-        <FlapText v-if="current.subtitle" class="subtitle" :text="current.subtitle" :size="18" />
-        <button v-if="current.link" type="button" class="mc-btn go" @click="open">
-          <PixelText text="前往 →" :px="2" />
+        <FlapText
+          class="title"
+          :text="current.title || ' '"
+          :size="38"
+        />
+        <FlapText
+          v-if="current.subtitle"
+          class="subtitle"
+          :text="current.subtitle"
+          :size="18"
+        />
+        <button
+          v-if="current.link"
+          type="button"
+          class="mc-btn go"
+          @click="open"
+        >
+          <PixelText
+            text="前往 →"
+            :px="2"
+          />
         </button>
       </div>
       <!-- 显示屏四角的螺丝 -->
@@ -104,14 +133,38 @@ watch(() => [props.items.length, props.preview], restart)
 
       <!-- 左右切换箭头：鼠标靠近公告板时淡入 -->
       <template v-if="items.length > 1">
-        <button type="button" class="arrow prev" aria-label="上一条公告" @click="go(index - 1, true)">
-          <svg viewBox="0 0 6 10" shape-rendering="crispEdges" aria-hidden="true">
-            <path d="M4 0h2v2h-2zM2 2h2v2h-2zM0 4h2v2h-2zM2 6h2v2h-2zM4 8h2v2h-2z" fill="currentColor" />
+        <button
+          type="button"
+          class="arrow prev"
+          aria-label="上一条公告"
+          @click="go(index - 1, true)"
+        >
+          <svg
+            viewBox="0 0 6 10"
+            shape-rendering="crispEdges"
+            aria-hidden="true"
+          >
+            <path
+              d="M4 0h2v2h-2zM2 2h2v2h-2zM0 4h2v2h-2zM2 6h2v2h-2zM4 8h2v2h-2z"
+              fill="currentColor"
+            />
           </svg>
         </button>
-        <button type="button" class="arrow next" aria-label="下一条公告" @click="go(index + 1, true)">
-          <svg viewBox="0 0 6 10" shape-rendering="crispEdges" aria-hidden="true">
-            <path d="M0 0h2v2h-2zM2 2h2v2h-2zM4 4h2v2h-2zM2 6h2v2h-2zM0 8h2v2h-2z" fill="currentColor" />
+        <button
+          type="button"
+          class="arrow next"
+          aria-label="下一条公告"
+          @click="go(index + 1, true)"
+        >
+          <svg
+            viewBox="0 0 6 10"
+            shape-rendering="crispEdges"
+            aria-hidden="true"
+          >
+            <path
+              d="M0 0h2v2h-2zM2 2h2v2h-2zM4 4h2v2h-2zM2 6h2v2h-2zM0 8h2v2h-2z"
+              fill="currentColor"
+            />
           </svg>
         </button>
       </template>

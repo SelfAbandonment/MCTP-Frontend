@@ -137,7 +137,7 @@ async function unbind() {
   min-height: 330px;
   overflow: hidden;
   background:
-    radial-gradient(ellipse at 100% 0%, #16210f5c 0%, transparent 58%),
+    radial-gradient(ellipse at 100% 0%, #e8b24a18 0%, transparent 58%),
     linear-gradient(160deg, var(--panel-raised) 0%, var(--panel) 100%);
 }
 
@@ -150,8 +150,8 @@ async function unbind() {
   height: 220px;
   pointer-events: none;
   background-image:
-    linear-gradient(#8ce06a22 1px, transparent 1px),
-    linear-gradient(90deg, #8ce06a22 1px, transparent 1px);
+    linear-gradient(#e8b24a22 1px, transparent 1px),
+    linear-gradient(90deg, #e8b24a22 1px, transparent 1px);
   background-size: 22px 22px;
   mask-image: radial-gradient(circle at center, #000 0%, transparent 72%);
   transform: rotate(-8deg);

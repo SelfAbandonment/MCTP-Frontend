@@ -91,55 +91,100 @@ async function revealLines() {
 </script>
 
 <template>
-  <section class="tarot" :class="{ 'is-in': entered }">
+  <section
+    class="tarot"
+    :class="{ 'is-in': entered }"
+  >
     <div class="head">
-      <PixelText text="塔罗星盘" :px="2" />
+      <PixelText
+        text="塔罗星盘"
+        :px="2"
+      />
       <span class="hint">依据抽牌时刻、牌面与今日星象给出点评 · 仅供娱乐</span>
     </div>
 
-    <Transition name="tarot-fade" mode="out-in">
-    <button v-if="stage === 'intro'" type="button" class="mc-btn" @click="openSpread"><PixelText text="抽一张塔罗牌" :px="2" /></button>
-
-    <!-- 抽牌：一行 7 张 -->
-    <div v-else-if="stage === 'spread' || stage === 'flipping'" ref="spreadRef" class="spread">
+    <Transition
+      name="tarot-fade"
+      mode="out-in"
+    >
       <button
-        v-for="k in SLOTS"
-        :key="k"
+        v-if="stage === 'intro'"
         type="button"
-        class="card"
-        :data-slot="k - 1"
-        :aria-label="`第 ${k} 张牌`"
-        :disabled="stage !== 'spread'"
-        @click="choose(k - 1)"
+        class="mc-btn"
+        @click="openSpread"
       >
-        <span class="flip">
-          <span class="back"><i>⚙</i></span>
-          <span v-if="draw && picked === k - 1" class="face" :class="{ reversed: draw.reversed }">
+        <PixelText
+          text="抽一张塔罗牌"
+          :px="2"
+        />
+      </button>
+
+      <!-- 抽牌：一行 7 张 -->
+      <div
+        v-else-if="stage === 'spread' || stage === 'flipping'"
+        ref="spreadRef"
+        class="spread"
+      >
+        <button
+          v-for="k in SLOTS"
+          :key="k"
+          type="button"
+          class="card"
+          :data-slot="k - 1"
+          :aria-label="`第 ${k} 张牌`"
+          :disabled="stage !== 'spread'"
+          @click="choose(k - 1)"
+        >
+          <span class="flip">
+            <span class="back"><i>⚙</i></span>
+            <span
+              v-if="draw && picked === k - 1"
+              class="face"
+              :class="{ reversed: draw.reversed }"
+            >
+              <b>{{ ROMAN[draw.card.n] }}</b>
+              <em>{{ draw.card.sym }}</em>
+              <strong>{{ draw.card.zh }}</strong>
+              <small>{{ draw.card.en }}</small>
+            </span>
+          </span>
+        </button>
+      </div>
+
+      <!-- 结果：牌 + 星盘 + 点评 -->
+      <div
+        v-else-if="stage === 'read' && draw && chart"
+        class="reading"
+        @vue:mounted="revealLines"
+      >
+        <div class="result-card">
+          <span
+            class="face static"
+            :class="{ reversed: draw.reversed }"
+          >
             <b>{{ ROMAN[draw.card.n] }}</b>
             <em>{{ draw.card.sym }}</em>
             <strong>{{ draw.card.zh }}</strong>
             <small>{{ draw.card.en }}</small>
           </span>
-        </span>
-      </button>
-    </div>
-
-    <!-- 结果：牌 + 星盘 + 点评 -->
-    <div v-else-if="stage === 'read' && draw && chart" class="reading" @vue:mounted="revealLines">
-      <div class="result-card">
-        <span class="face static" :class="{ reversed: draw.reversed }">
-          <b>{{ ROMAN[draw.card.n] }}</b>
-          <em>{{ draw.card.sym }}</em>
-          <strong>{{ draw.card.zh }}</strong>
-          <small>{{ draw.card.en }}</small>
-        </span>
-        <span class="pos">{{ draw.reversed ? '逆位' : '正位' }}</span>
+          <span class="pos">{{ draw.reversed ? '逆位' : '正位' }}</span>
+        </div>
+        <Astrolabe
+          :chart="chart"
+          class="astro"
+        />
+        <div
+          ref="readingRef"
+          class="lines"
+        >
+          <p
+            v-for="(l, i) in chart.lines"
+            :key="i"
+          >
+            {{ l }}
+          </p>
+        </div>
       </div>
-      <Astrolabe :chart="chart" class="astro" />
-      <div ref="readingRef" class="lines">
-        <p v-for="(l, i) in chart.lines" :key="i">{{ l }}</p>
-      </div>
-    </div>
     </Transition>
   </section>
 </template>

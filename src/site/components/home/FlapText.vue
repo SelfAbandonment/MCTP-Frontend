@@ -59,13 +59,30 @@ onBeforeUnmount(clearTimers)
 </script>
 
 <template>
-  <span class="flap-text" :style="{ '--fs': `${size}px` }" :aria-label="text" role="text">
-    <span v-for="(c, i) in cells" :key="i" class="cell" :class="{ wide: isWide(c.cur), space: c.cur === ' ' }" aria-hidden="true">
+  <span
+    class="flap-text"
+    :style="{ '--fs': `${size}px` }"
+    :aria-label="text"
+    role="text"
+  >
+    <span
+      v-for="(c, i) in cells"
+      :key="i"
+      class="cell"
+      :class="{ wide: isWide(c.cur), space: c.cur === ' ' }"
+      aria-hidden="true"
+    >
       <span class="half top"><span>{{ c.cur }}</span></span>
       <span class="half bottom"><span>{{ c.prev }}</span></span>
       <template v-if="c.n">
-        <span :key="'t' + c.n" class="half top flap-top"><span>{{ c.prev }}</span></span>
-        <span :key="'b' + c.n" class="half bottom flap-bottom"><span>{{ c.cur }}</span></span>
+        <span
+          :key="'t' + c.n"
+          class="half top flap-top"
+        ><span>{{ c.prev }}</span></span>
+        <span
+          :key="'b' + c.n"
+          class="half bottom flap-bottom"
+        ><span>{{ c.cur }}</span></span>
       </template>
     </span>
   </span>

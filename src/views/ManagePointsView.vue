@@ -285,8 +285,8 @@ onMounted(() => load())
   gap: 8px;
   margin-bottom: 20px;
   padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  border: 2px solid var(--outline);
+  border-radius: 0;
   background: var(--bg-soft);
   font-size: 13px;
   color: var(--text-soft);

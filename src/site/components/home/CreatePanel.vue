@@ -11,7 +11,10 @@ defineProps({
 </script>
 
 <template>
-  <div class="create-panel" :class="{ 'is-float': float }">
+  <div
+    class="create-panel"
+    :class="{ 'is-float': float }"
+  >
     <i class="rivet tl" /><i class="rivet tr" /><i class="rivet bl" /><i class="rivet br" />
     <div class="inner">
       <slot />

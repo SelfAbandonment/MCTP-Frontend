@@ -25,7 +25,8 @@ import ChangelogPanel from '../components/home/ChangelogPanel.vue'
 import RecentComments from '../components/home/RecentComments.vue'
 import ScrollUnroll from '../components/home/ScrollUnroll.vue'
 import PixelText from '../components/PixelText.vue'
-import { announcements } from '../services/announcements'
+import { loadAnnouncements } from '../services/announcements'
+import { errorMessage } from '@/utils/errors'
 import { isAdmin } from '../services/account'
 import { booted } from '../siteState'
 import { whenTransitionDone } from '../composables/usePageTransition'
@@ -34,6 +35,28 @@ const noticeRef = ref(null)
 const featureRef = ref(null)
 const changelogRef = ref(null)
 const commentsRef = ref(null)
+const announcements = ref([])
+const announcementLoading = ref(true)
+const announcementError = ref('')
+let announcementRequest
+
+async function refreshAnnouncements() {
+  announcementRequest?.abort()
+  const controller = new AbortController()
+  announcementRequest = controller
+  announcementLoading.value = true
+  announcementError.value = ''
+  try {
+    const items = await loadAnnouncements(controller.signal)
+    if (!controller.signal.aborted) announcements.value = items
+  } catch (error) {
+    if (!controller.signal.aborted) {
+      announcementError.value = errorMessage(error, '公告加载失败，请重试')
+    }
+  } finally {
+    if (!controller.signal.aborted) announcementLoading.value = false
+  }
+}
 
 // 每个板块：prepare = 先藏起来（挂载时立即执行），play = 进入画面时播放
 const blocks = [
@@ -98,6 +121,7 @@ function start() {
 }
 
 onMounted(() => {
+  refreshAnnouncements()
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
   blocks.forEach((b) => {
     const el = b.el()
@@ -109,6 +133,7 @@ onMounted(() => {
   else unwatch = watch(booted, (v) => v && go())
 })
 onBeforeUnmount(() => {
+  announcementRequest?.abort()
   io?.disconnect()
   io = null
   unwatch?.()
@@ -119,24 +144,75 @@ onBeforeUnmount(() => {
   <main class="site-page home-page">
     <AccountHero />
 
-    <section ref="noticeRef" class="block">
+    <section
+      ref="noticeRef"
+      class="block"
+    >
       <header class="block-head">
-        <PixelText text="公告" :px="4" />
-        <router-link v-if="isAdmin" to="/home/announcements" class="mc-btn is-ghost edit"><PixelText text="编辑公告" :px="2" /></router-link>
+        <PixelText
+          text="公告"
+          :px="4"
+        />
+        <router-link
+          v-if="isAdmin"
+          to="/home/announcements"
+          class="mc-btn is-ghost edit"
+        ><PixelText
+          text="编辑公告"
+          :px="2"
+        /></router-link>
       </header>
-      <FlapBoard :items="announcements" />
+      <p
+        v-if="announcementLoading"
+        role="status"
+      >
+        正在读取公告…
+      </p>
+      <div
+        v-else-if="announcementError"
+        role="alert"
+      >
+        <p>{{ announcementError }}</p>
+        <button
+          type="button"
+          class="mc-btn"
+          @click="refreshAnnouncements"
+        >
+          重试
+        </button>
+      </div>
+      <p
+        v-else-if="!announcements.length"
+        role="status"
+      >
+        暂无已发布公告。
+      </p>
+      <FlapBoard
+        v-else
+        :items="announcements"
+      />
     </section>
 
-    <section ref="featureRef" class="block">
+    <section
+      ref="featureRef"
+      class="block"
+    >
       <header class="block-head">
-        <PixelText text="功能" :px="4" />
+        <PixelText
+          text="功能"
+          :px="4"
+        />
       </header>
       <FeatureGrid />
     </section>
 
     <section class="block duo">
-      <ScrollUnroll ref="changelogRef"><ChangelogPanel /></ScrollUnroll>
-      <ScrollUnroll ref="commentsRef"><RecentComments /></ScrollUnroll>
+      <ScrollUnroll ref="changelogRef">
+        <ChangelogPanel />
+      </ScrollUnroll>
+      <ScrollUnroll ref="commentsRef">
+        <RecentComments />
+      </ScrollUnroll>
     </section>
   </main>
 </template>

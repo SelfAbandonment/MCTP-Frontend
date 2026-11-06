@@ -17,30 +17,71 @@ defineProps({
 </script>
 
 <template>
-  <footer v-if="compact" class="site-footer is-compact">
-    <nav class="row" aria-label="页脚">
-      <router-link v-for="l in FOOTER_COMPACT" :key="l.label" :to="l.to">{{ l.label }}</router-link>
+  <footer
+    v-if="compact"
+    class="site-footer is-compact"
+  >
+    <nav
+      class="row"
+      aria-label="页脚"
+    >
+      <router-link
+        v-for="l in FOOTER_COMPACT"
+        :key="l.label"
+        :to="l.to"
+      >{{ l.label }}</router-link>
     </nav>
-    <p class="fine">{{ FOOTER_TEXT.copyright }} · {{ FOOTER_TEXT.notOfficial }}</p>
+    <p class="fine">
+      {{ FOOTER_TEXT.copyright }} · {{ FOOTER_TEXT.notOfficial }}
+    </p>
   </footer>
 
-  <footer v-else class="site-footer">
+  <footer
+    v-else
+    class="site-footer"
+  >
     <!-- 黄铜传动轴分隔线：一条横杆 + 等距的轴套 -->
-    <div class="shaft" aria-hidden="true" />
+    <div
+      class="shaft"
+      aria-hidden="true"
+    />
 
     <div class="wrap">
       <div class="brand">
-        <PixelText text="MCREATOPIA" :px="3" />
+        <PixelText
+          text="MCREATOPIA"
+          :px="3"
+        />
         <p>机械动力 · 我的世界玩家社区</p>
       </div>
 
-      <nav v-for="g in FOOTER_GROUPS" :key="g.title" class="group" :aria-label="g.title">
+      <nav
+        v-for="g in FOOTER_GROUPS"
+        :key="g.title"
+        class="group"
+        :aria-label="g.title"
+      >
         <h4>{{ g.title }}</h4>
         <ul>
-          <li v-for="l in g.links" :key="l.label">
-            <router-link v-if="l.to" :to="l.to">{{ l.label }}</router-link>
-            <a v-else-if="l.href" :href="l.href" target="_blank" rel="noopener">{{ l.label }}</a>
-            <span v-else class="pending" title="待填写">{{ l.label }}</span>
+          <li
+            v-for="l in g.links"
+            :key="l.label"
+          >
+            <router-link
+              v-if="l.to"
+              :to="l.to"
+            >{{ l.label }}</router-link>
+            <a
+              v-else-if="l.href"
+              :href="l.href"
+              target="_blank"
+              rel="noopener"
+            >{{ l.label }}</a>
+            <span
+              v-else
+              class="pending"
+              title="待填写"
+            >{{ l.label }}</span>
           </li>
         </ul>
       </nav>
