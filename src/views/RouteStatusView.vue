@@ -103,8 +103,8 @@ async function retry() {
   z-index: -2;
   pointer-events: none;
   background:
-    radial-gradient(circle at 72% 28%, #1c301640 0%, transparent 58%),
-    radial-gradient(circle at 8% 88%, #8ce06a12 0%, transparent 44%);
+    radial-gradient(circle at 72% 28%, #3a3b4040 0%, transparent 58%),
+    radial-gradient(circle at 8% 88%, #e8b24a12 0%, transparent 44%);
 }
 
 .route-status__num {

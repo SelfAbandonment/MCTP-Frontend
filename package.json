@@ -1,6 +1,6 @@
 {
   "name": "mctp-frontend",
-  "description": "MCTP Frontend — Minecraft-themed cinematic community site, built with Vue 3 + Vite + GSAP",
+  "description": "MCTP Frontend — Create-themed community site, built with Vue 3 + Vite + GSAP",
   "private": true,
   "version": "0.2.0",
   "type": "module",
@@ -18,9 +18,11 @@
     "lint:check": "eslint . --ext .vue,.js,.jsx,.mjs"
   },
   "dependencies": {
+    "@fontsource/vt323": "^5.2.5",
     "axios": "^1.15.0",
     "gsap": "^3.15.0",
     "pinia": "^4.1.0",
+    "three": "^0.187.0",
     "vue": "^3.5.32",
     "vue-router": "^5.4.0"
   },
@@ -28,7 +30,6 @@
     "@vitejs/plugin-vue": "^6.0.10",
     "eslint": "^10.14.0",
     "eslint-plugin-vue": "^10.12.0",
-    "three": "^0.186.1",
     "vite": "^8.0.4",
     "vue-eslint-parser": "^10.4.1"
   },

@@ -118,12 +118,12 @@ function backToLogin() {
   width: 100%;
   max-width: 480px;
   padding: clamp(32px, 4vw, 52px);
-  border-radius: 18px;
+  border-radius: 0;
   text-align: center;
   background:
-    radial-gradient(ellipse at 50% 0%, #16210f5c 0%, transparent 58%),
+    radial-gradient(ellipse at 50% 0%, #e8b24a18 0%, transparent 58%),
     linear-gradient(160deg, var(--panel-raised) 0%, var(--panel) 100%);
-  box-shadow: 0 30px 100px #00000073;
+  box-shadow: inset 3px 3px 0 var(--casing-hi), inset -3px -3px 0 #111, 0 8px 0 #0005;
 }
 
 .cb-eyebrow {
