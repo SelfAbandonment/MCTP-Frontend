@@ -1,1 +1,0 @@
-import{o as e}from"./_plugin-vue_export-helper-BKOcFDYP.js";import{s as t}from"./index-vg7bisWK.js";function n(e){return{uid:e.id,name:e.minecraft?.username||e.username,avatar:e.avatar||null,role:e.is_staff&&e.is_active!==!1?`admin`:`user`}}var r=e(()=>{let e=t();return e.isLoggedIn&&e.user?n(e.user):null}),i=e(()=>!!r.value),a=e(()=>t().isStaff);export{a as n,i as r,r as t};
