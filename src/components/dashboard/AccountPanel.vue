@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { isAdmin } from '@/site/services/account'
 import { authApi } from '@/api/auth'
 import { errorMessage, fieldErrors, formatDate } from '@/utils/errors'
 
@@ -36,7 +37,7 @@ async function saveProfile() {
       <h2 id="account-title">
         你的账号
       </h2>
-      <span class="badge">{{ auth.isStaff ? '社区管理者' : '社区玩家' }}</span>
+      <span class="badge">{{ isAdmin ? '社区管理者' : '社区玩家' }}</span>
     </div>
     <dl class="detail-list">
       <div><dt>用户名</dt><dd>{{ auth.user?.username }}</dd></div>

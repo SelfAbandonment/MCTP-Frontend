@@ -1,5 +1,6 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth'
+import { isAdmin } from '@/site/services/account'
 import { useServiceHealth } from '@/composables/useServiceHealth'
 import { formatDate } from '@/utils/errors'
 
@@ -56,7 +57,7 @@ const { health, loading, error, lastChecked, online, check } = useServiceHealth(
         社区公告 ↗
       </RouterLink>
       <RouterLink
-        v-if="auth.isStaff"
+        v-if="isAdmin"
         to="/manage"
       >
         进入管理区 ↗
