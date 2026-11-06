@@ -81,10 +81,12 @@ const STAR = 'M3 0h1v2h3v1h-1v1h-1v1h1v2h-1v-1h-1v-1h-1v1h-1v1h-1v-2h1v-1h-1v-1h
     :class="{ 'is-locked': locked }"
   >
     <div class="head">
-      <PixelText
-        text="今日运势"
-        :px="3"
-      />
+      <h2>
+        <PixelText
+          text="今日运势"
+          :px="3"
+        />
+      </h2>
       <span class="date">{{ today }}</span>
     </div>
 

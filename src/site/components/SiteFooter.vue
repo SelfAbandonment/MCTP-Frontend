@@ -116,7 +116,7 @@ defineProps({
   gap: 32px;
   width: min(1120px, 100%);
   margin: 0 auto;
-  padding: 44px clamp(16px, 5vw, 64px) 28px;
+  padding: 36px 20px 24px;
 }
 .brand {
   color: #fff;
@@ -141,6 +141,7 @@ defineProps({
   gap: 9px;
   font-size: 14px;
 }
+.group :is(a, .pending) { display: inline-flex; align-items: center; min-height: 44px; }
 .group a:hover {
   color: #fff;
   text-decoration: underline;

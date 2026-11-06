@@ -53,10 +53,11 @@ test('field errors translate the common DRF wording', () => {
 })
 
 test('login redirects stay within the local router', () => {
-  for (const invalid of ['https://example.com', '//example.com', '/\\example.com', ['dashboard'], null]) {
-    assert.equal(localRedirect(invalid), '/dashboard')
+  for (const invalid of ['https://example.com', '//example.com', '/\\example.com', ['dashboard'], null, '/login', '/register?redirect=/points', '/auth/microsoft/callback']) {
+    assert.equal(localRedirect(invalid), '/home')
   }
   assert.equal(localRedirect('/manage/players?search=a'), '/manage/players?search=a')
+  assert.equal(localRedirect('/home#account'), '/home#account')
 })
 
 test('dates are safe for missing or invalid values', () => {

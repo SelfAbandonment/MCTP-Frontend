@@ -17,11 +17,11 @@ import PixelText from '../components/PixelText.vue'
 import SiteFooter from '../components/SiteFooter.vue'
 
 const SECTIONS = [
-  { key: 'cover', kicker: 'MINECRAFT · CREATE', title: '机械动力服务器', body: '向下滑动，开始装配你的世界。', note: '【待定】封面主视觉 / 标语' },
-  { key: 'world', kicker: '01 / WORLD', title: '世界一览', body: '镜头飞入方块小岛——这里将替换为服务器实景 3D 场景。', note: '【待定】服务器地图 .glb 模型 + 天空盒' },
-  { key: 'overview', kicker: '02 / OVERVIEW', title: '俯瞰全局', body: '俯视机位，适合放置地标点位、可点击的热点。', note: '【待定】热点位置与弹出内容' },
-  { key: 'machine', kicker: '03 / MACHINE', title: '传动装配', body: '齿轮驱动模型近景，适合讲玩法 / 特色机械。', note: '【待定】玩法说明与配图' },
-  { key: 'enter', kicker: '04 / ENTER', title: '进入主页面', body: '索引到此结束，点击前往主页面。', note: '' },
+  { key: 'cover', kicker: 'MINECRAFT · CREATE', title: '机械动力服务器', body: '向下滑动，开始装配你的世界。', note: '' },
+  { key: 'world', kicker: '01 / WORLD', title: '世界一览', body: '方块、建筑与机械，共同组成我们的世界。', note: '本站 3D 场景为主题示意，并非服务器实景。' },
+  { key: 'overview', kicker: '02 / OVERVIEW', title: '俯瞰全局', body: '从新的角度，发现方块世界的可能。', note: '' },
+  { key: 'machine', kicker: '03 / MACHINE', title: '传动装配', body: '从一枚齿轮开始，连接属于你的机械创意。', note: '' },
+  { key: 'enter', kicker: '04 / ENTER', title: '进入你的世界', body: '登录后进入个人中心，查看自己的身份、积分与社区功能。', note: '' },
 ]
 console.assert(SECTIONS.length === SHOT_COUNT, '分段数量需与 VoxelStage 的镜头关键帧数量一致')
 
@@ -79,7 +79,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="index-page">
+  <main
+    class="index-page"
+    aria-label="官网介绍"
+  >
     <canvas
       ref="canvasRef"
       class="stage"
@@ -98,6 +101,7 @@ onBeforeUnmount(() => {
           :ref="(el) => (sectionRefs[i] = el)"
           class="fp-section"
           :class="`is-${s.key}`"
+          :inert="i !== index"
           :style="{ height: `${100 / SECTIONS.length}%` }"
         >
           <div class="copy">
@@ -107,7 +111,8 @@ onBeforeUnmount(() => {
             >
               {{ s.kicker }}
             </p>
-            <h2
+            <component
+              :is="i === 0 ? 'h1' : 'h2'"
               class="title"
               data-reveal
             >
@@ -115,7 +120,7 @@ onBeforeUnmount(() => {
                 :text="s.title"
                 :px="i === 0 ? 5 : 4"
               />
-            </h2>
+            </component>
             <p
               class="body"
               data-reveal
@@ -136,12 +141,11 @@ onBeforeUnmount(() => {
               data-reveal
             >
               <PixelText
-                text="前往主页面 →"
+                text="进入个人中心 →"
                 :px="2"
               />
             </router-link>
           </div>
-          <!-- 最后一段底部：精简页脚（协议条款 / 反馈 + 非官方声明） -->
           <SiteFooter
             v-if="s.key === 'enter'"
             compact
@@ -174,7 +178,7 @@ onBeforeUnmount(() => {
     >
       滚动 / 拖拽 / 滑动 ↓
     </p>
-  </div>
+  </main>
 </template>
 
 <style scoped>
@@ -208,7 +212,7 @@ onBeforeUnmount(() => {
   position: relative;
   display: flex;
   align-items: center;
-  padding: 0 clamp(20px, 8vw, 120px);
+  padding: var(--site-header-height) clamp(20px, 8vw, 120px) 64px;
 }
 .copy {
   max-width: 560px;
@@ -281,22 +285,20 @@ onBeforeUnmount(() => {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 4px;
 }
 .dots button {
   display: block;
-  width: 10px;
-  height: 10px;
-  padding: 0;
-  border: 2px solid rgba(255, 255, 255, 0.6);
-  background: transparent;
+  width: 44px;
+  height: 44px;
+  padding: 14px;
+  border: 0;
+  background: radial-gradient(circle, #ffffff99 0 4px, transparent 5px);
   cursor: pointer;
   transition: background 0.25s, border-color 0.25s, box-shadow 0.25s;
 }
 .dots button.active {
-  background: var(--gold);
-  border-color: var(--gold);
-  box-shadow: 0 0 8px rgba(255, 201, 60, 0.7);
+  background: radial-gradient(circle, var(--gold) 0 5px, transparent 6px);
 }
 .hint {
   position: absolute;

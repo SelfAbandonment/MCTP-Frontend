@@ -45,11 +45,16 @@ watchEffect(() => {
       >
         【草案】本文尚未定稿，内容需服务器管理团队审定后发布。
       </p>
-      <PixelText
-        class="title"
-        :text="doc.title"
-        :px="4"
-      />
+      <p class="availability-note">
+        部分功能仍在规划中，是否开放以页面状态及社区公告为准。在线反馈与申诉尚未开放，请使用已有社区渠道联系管理员。
+      </p>
+      <h1>
+        <PixelText
+          class="title"
+          :text="doc.title"
+          :px="4"
+        />
+      </h1>
       <p class="updated">
         更新日期：{{ doc.updated }}
       </p>
@@ -63,7 +68,7 @@ watchEffect(() => {
         v-for="s in doc.sections"
         :key="s.h"
       >
-        <h3>{{ s.h }}</h3>
+        <h2>{{ s.h }}</h2>
         <p
           v-for="(p, i) in s.p"
           :key="i"
@@ -118,6 +123,7 @@ watchEffect(() => {
   background: #ffe2a3;
   box-shadow: inset 0 0 0 2px #e0a33c;
 }
+.availability-note { margin: 0 0 20px; font-size: 14px; line-height: 1.8; color: #5a4126; }
 .title {
   color: var(--ink);
 }
@@ -131,7 +137,7 @@ watchEffect(() => {
   font-size: 15px;
   line-height: 1.8;
 }
-h3 {
+h2 {
   margin: 26px 0 8px;
   font-size: 16px;
   color: #5e3a18;

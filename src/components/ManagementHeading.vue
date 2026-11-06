@@ -14,7 +14,7 @@ defineProps({ title: { type: String, required: true } })
       to="/"
       class="btn-secondary"
     >
-      查看官网 ↗
+      返回首页 ↗
     </RouterLink>
   </div>
   <nav
@@ -42,7 +42,7 @@ defineProps({ title: { type: String, required: true } })
 
 .page-heading h1 {
   font-family: var(--font-display);
-  font-size: clamp(34px, 4.6vw, 64px);
+  font-size: clamp(28px, 3.2vw, 40px);
   font-weight: 400;
   line-height: 1.04;
 }
@@ -54,7 +54,7 @@ defineProps({ title: { type: String, required: true } })
 
 @media (max-width: 700px) {
   .page-heading h1 {
-    font-size: clamp(30px, 9vw, 46px);
+    font-size: 28px;
   }
 
   .management-tabs {

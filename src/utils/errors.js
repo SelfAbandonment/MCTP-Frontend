@@ -95,8 +95,9 @@ export function fieldErrors(error) {
   return Object.fromEntries(Object.entries(data).map(([key, value]) => [key, fieldText(value)]))
 }
 
-export function localRedirect(value, fallback = '/dashboard') {
+export function localRedirect(value, fallback = '/home') {
   return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') && !value.includes('\\')
+    && !/^\/(?:login|register|auth\/microsoft\/callback)(?:[?#]|$)/.test(value)
     ? value : fallback
 }
 

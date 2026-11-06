@@ -18,7 +18,7 @@ export function registerTransition(play) {
   }
 }
 
-export function playTransition({ onCovered } = {}) {
+export function playTransition({ onCovered, kind = 'brand' } = {}) {
   // 没有播放器（组件未挂载）或已在播放：不叠加第二个转场，直接切换
   if (!player || running) {
     onCovered?.()
@@ -26,6 +26,7 @@ export function playTransition({ onCovered } = {}) {
   }
   running = new Promise((resolve) => {
     player({
+      kind,
       onCovered: () => onCovered?.(),
       onComplete: () => {
         running = null
@@ -38,7 +39,7 @@ export function playTransition({ onCovered } = {}) {
 
 export function coverScreen() {
   return new Promise((resolve) => {
-    playTransition({ onCovered: resolve })
+    playTransition({ onCovered: resolve, kind: 'page' })
   })
 }
 

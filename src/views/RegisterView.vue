@@ -1,11 +1,12 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AuthLayout from '@/components/AuthLayout.vue'
-import { errorMessage, fieldErrors } from '@/utils/errors'
+import { errorMessage, fieldErrors, localRedirect } from '@/utils/errors'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 const form = ref({ username: '', email: '', password: '', password_confirm: '' })
 const loading = ref(false)
@@ -29,7 +30,7 @@ async function handleRegister() {
   loading.value = true
   try {
     await auth.register(form.value.username, form.value.email, form.value.password)
-    await router.push('/dashboard')
+    await router.push(localRedirect(route.query.redirect))
   } catch (e) {
     registrationSucceeded.value = !!e.registrationSucceeded
     errors.value = fieldErrors(e)
@@ -47,7 +48,7 @@ async function handleRegister() {
     <p class="eyebrow">
       新的故事
     </p>
-    <h2>留个位置，给你。</h2>
+    <h1>留个位置，给你。</h1>
     <p class="auth-description">
       创建账号，开始认识这个世界。
     </p>
@@ -59,7 +60,7 @@ async function handleRegister() {
       {{ globalError }}
       <RouterLink
         v-if="registrationSucceeded"
-        to="/login"
+        :to="{ path: '/login', query: { redirect: localRedirect(route.query.redirect) } }"
         class="link"
       >
         前往登录
@@ -106,7 +107,7 @@ async function handleRegister() {
     <p class="auth-switch">
       已有账号？
       <RouterLink
-        to="/login"
+        :to="{ path: '/login', query: { redirect: localRedirect(route.query.redirect) } }"
         class="link"
       >
         登录

@@ -25,6 +25,8 @@
 }
 
 :root {
+  --site-width: 1120px;
+  --site-header-height: 76px;
   --space-bg: #0b0c10; /* 加载页 / 全站底色：深灰黑，像太空 */
   --gold: #ffc93c;
   --font-pixel: 'Site Pixel', monospace;
@@ -134,12 +136,22 @@ html.fp-lock body {
 /* 普通滚动页面（主页面、反馈等）：给固定导航栏留出顶部空间 */
 .site-page {
   min-height: 100dvh;
-  padding: clamp(84px, 12vh, 120px) clamp(16px, 5vw, 64px) 80px;
+  padding: calc(var(--site-header-height) + 32px) max(20px, calc((100vw - var(--site-width)) / 2)) 64px;
   background: radial-gradient(120% 80% at 50% 0%, #161b26 0%, var(--space-bg) 60%);
   color: #fff;
   font-family: var(--font-ui);
 }
 /* 手机上导航栏是两行（见 SiteNav.vue），顶部留白要多一些 */
 @media (max-width: 800px) {
-  .site-page { padding-top: 116px; }
+  :root { --site-header-height: 112px; }
+  .site-page { padding-top: calc(var(--site-header-height) + 24px); }
 }
+
+:is(a, button, summary, input, select, textarea):focus-visible {
+  outline: 2px solid var(--brass-hi);
+  outline-offset: 4px;
+}
+.site-page h1 { margin: 0 0 20px; font-size: clamp(28px, 3.2vw, 40px); line-height: 1.35; }
+.site-page :is(h1, h2, h3) > .pixel-text { max-width: 100%; height: auto; }
+.site-page h2 { margin: 0; font-size: 24px; }
+[id] { scroll-margin-top: calc(var(--site-header-height) + 24px); }

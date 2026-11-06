@@ -1,253 +1,215 @@
 <script setup>
-/**
- * 文件用途：全站透明导航栏
- * 布局：左 = 矢量 Logo + 与 Logo 等高的光滑白色像素字 "MCREATOPIA"；
- *       中 = "索引 / 主页面 / 反馈" 三个像素字链接（随 Language 切换语言）；
- *       右 = Language 语言选择器 + 《我的世界》金色时钟 + 24 小时制现实时间（HH:MM）。
- * 动效：show 变为 true 时（首次加载结束），整条导航栏连同 Logo 一起从屏幕上方掉落，
- *       用 bounce.out 缓动——"从空中下落、突然停住、再弹两下"。
- * 跳转：使用普通 router-link；转场由路由守卫统一接管（见 router/index.js），这里无需额外处理。
- * 当前页：router-link-exact-active 类 → 薄弱而明显的金色辉光。
- */
-import { onBeforeUnmount, onMounted, ref, watch, nextTick } from 'vue'
-import gsap from 'gsap'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import PixelText from './PixelText.vue'
-import McClock from './McClock.vue'
 import LanguagePicker from './LanguagePicker.vue'
 import logoUrl from '../assets/logo-placeholder.svg'
-import { wordPath } from '../pixel/path'
-import { GLYPH_H } from '../pixel/glyphs'
-import { t } from '../i18n'
+import { locale, t } from '../i18n'
 
-const props = defineProps({ show: { type: Boolean, default: false } })
-
-const LINKS = [
+defineProps({ show: { type: Boolean, default: false } })
+const route = useRoute()
+const router = useRouter()
+const auth = useAuthStore()
+const menuRef = ref(null)
+const menuLabel = computed(() => auth.user?.minecraft?.username || auth.user?.username || '账号与设置')
+const links = computed(() => [
   { to: '/', key: 'nav.index' },
-  { to: '/home', key: 'nav.home' },
+  ...(auth.isLoggedIn && auth.user ? [{ to: '/home', key: 'nav.home' }] : []),
+  { to: '/announcements', key: 'nav.announcements' },
+  ...(auth.isLoggedIn && auth.user ? [{ to: '/home#features', key: 'nav.features' }] : []),
   { to: '/feedback', key: 'nav.feedback' },
-]
-
-// Logo 右边的字标：用自绘 5×7 点阵合成一条 path，纯白、无倒角无描边（"光滑"）
-const mark = wordPath('MCREATOPIA')
-
-const navRef = ref(null)
-const now = ref(new Date())
-const pad = (n) => String(n).padStart(2, '0')
-const timeText = ref('')
-function refreshTime() {
-  now.value = new Date()
-  timeText.value = `${pad(now.value.getHours())}:${pad(now.value.getMinutes())}`
+])
+function active(link) {
+  if (link.key === 'nav.index') return route.name === 'index'
+  if (link.key === 'nav.features') return route.hash === '#features' || route.name === 'feature'
+  if (link.key === 'nav.home') return route.name === 'home' && !route.hash
+  return route.path === link.to || route.path.startsWith(`${link.to}/`)
 }
-
-// 只在"整分钟"刷新：先对齐到下一分钟，再每 60s 一次，不做秒级刷新
-let alignTimer, minuteTimer
-function startClock() {
-  refreshTime()
-  const msToNext = 60000 - (Date.now() % 60000) + 20
-  alignTimer = setTimeout(() => {
-    refreshTime()
-    minuteTimer = setInterval(refreshTime, 60000)
-  }, msToNext)
+function closeMenu(restoreFocus = false) {
+  if (!menuRef.value?.open) return
+  menuRef.value.open = false
+  if (restoreFocus) menuRef.value.querySelector('summary').focus()
 }
-
-function drop() {
-  gsap.fromTo(
-    navRef.value,
-    { yPercent: -180, autoAlpha: 1 },
-    { yPercent: 0, duration: 1.15, ease: 'bounce.out' },
-  )
+function onOutside(event) {
+  if (!menuRef.value?.contains(event.target)) closeMenu()
 }
-
-watch(() => props.show, (v) => v && nextTick(drop))
-
-// 普通滚动页面（主页面、反馈等）往下滚动后，导航栏背后加一层由深到透明的渐变，
-// 避免透明导航栏的文字和页面内容叠在一起看不清；回到顶部时恢复完全透明。
-const scrolled = ref(false)
-const onScroll = () => (scrolled.value = window.scrollY > 24)
-
-onMounted(() => {
-  window.addEventListener('scroll', onScroll, { passive: true })
-  startClock()
-  if (props.show) drop()
-})
-onBeforeUnmount(() => {
-  window.removeEventListener('scroll', onScroll)
-  clearTimeout(alignTimer)
-  clearInterval(minuteTimer)
-})
+async function signOut() {
+  closeMenu()
+  if (route.meta.requiresAuth) await router.replace('/')
+  auth.logout()
+}
+watch(() => route.fullPath, () => closeMenu())
+onMounted(() => document.addEventListener('pointerdown', onOutside))
+onBeforeUnmount(() => document.removeEventListener('pointerdown', onOutside))
 </script>
 
 <template>
   <header
-    ref="navRef"
     class="site-nav"
-    :class="{ 'is-hidden': !show, 'is-scrolled': scrolled }"
+    :class="{ 'is-hidden': !show }"
+    data-fp-ignore
+    @keydown.esc.stop.prevent="closeMenu(true)"
   >
-    <router-link
+    <RouterLink
       to="/"
       class="nav-brand"
-      aria-label="MCREATOPIA"
+      aria-label="MCREATOPIA · 官网介绍"
     >
       <img
-        class="nav-logo"
         :src="logoUrl"
         alt=""
+        width="32"
+        height="32"
       >
-      <svg
+      <PixelText
         class="nav-wordmark"
-        :viewBox="`0 0 ${mark.width} ${GLYPH_H}`"
-        shape-rendering="crispEdges"
-        aria-hidden="true"
-      >
-        <path
-          :d="mark.d"
-          fill="currentColor"
-        />
-      </svg>
-    </router-link>
-
+        text="MCREATOPIA"
+        :px="3"
+      />
+    </RouterLink>
     <nav
       class="nav-links"
       aria-label="主导航"
     >
-      <router-link
-        v-for="l in LINKS"
-        :key="l.to"
-        :to="l.to"
+      <RouterLink
+        v-for="link in links"
+        :key="link.key"
+        :to="link.to"
         class="nav-link"
+        :class="{ 'is-active': active(link) }"
+        :aria-current="active(link) ? 'page' : undefined"
+        :lang="locale"
       >
-        <PixelText
-          :text="t(l.key)"
-          :px="2"
-        />
-      </router-link>
+        {{ t(link.key) }}
+      </RouterLink>
     </nav>
-
-    <div class="nav-time">
-      <LanguagePicker />
-      <McClock
-        :date="now"
-        :px="2"
-      />
-      <PixelText
-        :text="timeText"
-        :px="2"
-      />
-    </div>
+    <details
+      ref="menuRef"
+      class="account-menu"
+    >
+      <summary class="account-trigger">
+        <span>{{ menuLabel }}</span><span aria-hidden="true">▾</span>
+      </summary>
+      <div class="account-popover">
+        <template v-if="auth.isLoggedIn">
+          <RouterLink to="/home">个人中心</RouterLink>
+          <RouterLink to="/home#account">账号设置</RouterLink>
+          <RouterLink to="/points">我的积分</RouterLink>
+          <RouterLink
+            v-if="auth.isStaff"
+            to="/manage/announcements"
+          >社区管理</RouterLink>
+          <button
+            type="button"
+            @click="signOut"
+          >
+            退出登录
+          </button>
+        </template>
+        <template v-else>
+          <RouterLink to="/login">登录</RouterLink>
+          <RouterLink to="/register">创建账号</RouterLink>
+        </template>
+        <RouterLink to="/">官网介绍</RouterLink>
+        <LanguagePicker />
+      </div>
+    </details>
   </header>
 </template>
 
 <style scoped>
 .site-nav {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  inset: 0 0 auto;
   z-index: 100;
+  min-height: var(--site-header-height);
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  padding: clamp(10px, 2vh, 22px) clamp(14px, 3vw, 40px);
+  gap: 20px;
+  padding: 12px max(24px, calc((100vw - var(--site-width)) / 2));
   background: transparent;
-  color: #fff;
-  pointer-events: none; /* 只让实际可点元素接收事件，不挡住下面的页面交互 */
-}
-.site-nav::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 -30px;
-  background: linear-gradient(180deg, rgba(11, 12, 16, 0.92), rgba(11, 12, 16, 0));
-  opacity: 0;
-  transition: opacity 0.3s;
   pointer-events: none;
-  z-index: -1;
+  color: #fff;
+  font-family: var(--font-ui);
 }
-.site-nav.is-scrolled::before {
-  opacity: 1;
-}
-.site-nav > * {
-  pointer-events: auto;
-}
-.is-hidden {
-  visibility: hidden;
-}
-/* Logo 与字标共用同一个高度变量，保证"字和商标差不多大" */
+.site-nav > * { pointer-events: auto; }
+.is-hidden { visibility: hidden; }
 .nav-brand {
-  --brand-h: clamp(26px, 2.8vw, 40px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  min-width: 44px;
   justify-self: start;
-  display: flex;
-  align-items: center;
-  gap: calc(var(--brand-h) * 0.35);
-  color: #fff;
 }
-.nav-logo {
-  display: block;
-  width: var(--brand-h);
-  height: var(--brand-h);
-  image-rendering: pixelated;
-}
-.nav-wordmark {
-  display: block;
-  height: calc(var(--brand-h) * 0.8);
-  width: auto;
-}
-.nav-links {
-  display: flex;
-  gap: clamp(14px, 3vw, 44px);
-}
+.nav-brand img { image-rendering: pixelated; }
+.nav-brand, .nav-link, .account-trigger { filter: drop-shadow(0 2px 2px #000); }
+.nav-links { display: flex; align-items: center; gap: 8px; }
 .nav-link {
-  color: #fff;
-  opacity: 0.78;
-  padding: 6px 4px;
-  transition: opacity 0.2s, filter 0.3s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 16px;
+  color: #ddd;
+  font-size: 17px;
+  border-bottom: 3px solid transparent;
 }
-.nav-link:hover {
-  opacity: 1;
+.nav-link:hover { color: var(--brass-hi); background: #ffffff08; }
+.nav-link.is-active { color: var(--brass-hi); border-color: var(--brass); }
+.account-menu { justify-self: end; position: relative; min-width: 0; }
+.account-trigger {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 44px;
+  max-width: 200px;
+  padding: 8px 12px;
+  cursor: pointer;
+  background: transparent;
 }
-/* 当前页：薄弱但明显的金色光，用两层 drop-shadow（像素字是 SVG，text-shadow 无效） */
-.nav-link.router-link-exact-active {
-  opacity: 1;
-  color: #fff6d8;
-  filter: drop-shadow(0 0 2px rgba(255, 201, 60, 0.9)) drop-shadow(0 0 8px rgba(255, 190, 40, 0.45));
+.account-trigger::-webkit-details-marker { display: none; }
+.account-trigger span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  display: grid;
+  width: 224px;
+  padding: 12px;
+  background: var(--casing-lo);
+  border: 2px solid var(--casing-hi);
+  box-shadow: 4px 6px 0 #0008;
 }
-.nav-time {
-  justify-self: end;
+.account-popover :is(a, button) {
   display: flex;
   align-items: center;
-  gap: 10px;
+  min-height: 44px;
+  padding: 10px;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: #fff;
+  cursor: pointer;
+  text-align: left;
 }
-
+.account-popover :is(a, button):hover { background: var(--casing); }
+@media (max-width: 1100px) {
+  .nav-wordmark { display: none; }
+}
 @media (max-width: 800px) {
-  /* 手机竖屏：一行放不下 Logo + 三个链接 + Language + 时钟 + 时间（会把时钟挤出屏幕），
-     改成两行——第一行左 Logo、右 Language/时钟/时间；第二行居中放三个页面链接 */
   .site-nav {
-    grid-template-columns: auto 1fr;
-    grid-template-areas:
-      'brand time'
-      'links links';
-    gap: 6px 10px;
-    padding-bottom: 6px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: 'brand account' 'links links';
+    gap: 4px 12px;
+    padding: 8px 16px;
   }
   .nav-brand { grid-area: brand; }
-  .nav-time { grid-area: time; }
-  .nav-links {
-    grid-area: links;
-    justify-content: center;
-    gap: 22px;
-  }
-  /* 手机端整体缩到 1.5 倍像素（zoom 会同时缩小占位尺寸，transform 不会） */
-  .nav-link :deep(svg),
-  .nav-time :deep(svg) {
-    zoom: 0.75;
-  }
-  .nav-time {
-    gap: 6px;
-  }
-}
-/* 窗口不够宽时整行字标会和中间的链接挤在一起，只保留 Logo */
-@media (max-width: 1080px) {
-  .nav-wordmark {
-    display: none;
-  }
+  .account-menu { grid-area: account; }
+  .nav-links { grid-area: links; justify-content: center; gap: 4px; }
+  .nav-link { padding: 6px 8px; font-size: 16px; }
+  .account-trigger { max-width: 180px; }
 }
 </style>

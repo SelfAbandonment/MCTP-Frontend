@@ -38,10 +38,12 @@ watchEffect(() => {
         />
         <div class="head">
           <span class="en">{{ feature.en }}</span>
-          <PixelText
-            :text="feature.name"
-            :px="4"
-          />
+          <h1>
+            <PixelText
+              :text="feature.name"
+              :px="4"
+            />
+          </h1>
           <p class="desc">
             {{ feature.desc }}
           </p>
@@ -58,12 +60,12 @@ watchEffect(() => {
             上传的内容需要管理员审核通过后才会公开
           </li>
           <li v-if="!feature.upload">
-            浏览无需登录
+            登录后可浏览社区功能
           </li>
         </ul>
 
         <section class="plans">
-          <h3>计划中的功能</h3>
+          <h2>计划中的功能</h2>
           <ol>
             <li
               v-for="p in feature.plans"
@@ -81,7 +83,7 @@ watchEffect(() => {
           to="/home"
           class="mc-btn is-ghost"
         ><PixelText
-          text="← 返回主页面"
+          text="← 返回个人中心"
           :px="2"
         /></router-link>
       </div>
@@ -143,7 +145,7 @@ watchEffect(() => {
 .warn {
   color: #ff9a6b;
 }
-.plans h3 {
+.plans h2 {
   margin: 0 0 10px;
   font-family: var(--font-body);
   font-size: 15px;

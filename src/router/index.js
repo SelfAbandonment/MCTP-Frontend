@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import BusinessPage from '@/components/BusinessPage.vue'
 import { coverScreen } from '@/site/composables/usePageTransition'
+import { localRedirect } from '@/utils/errors'
 
 const DEFAULT_TITLE = 'MCTP · MCREATOPIA'
 
@@ -16,7 +17,11 @@ const routes = [
     path: '/home',
     name: 'home',
     component: () => import('@/site/pages/HomePage.vue'),
-    meta: { title: '主页面 · MCTP' },
+    meta: { requiresAuth: true, title: '个人中心 · MCTP' },
+  },
+  {
+    path: '/dashboard',
+    redirect: '/home',
   },
   {
     path: '/feedback',
@@ -32,7 +37,7 @@ const routes = [
     path: '/home/f/:key',
     name: 'feature',
     component: () => import('@/site/pages/FeaturePage.vue'),
-    meta: { title: '功能 · MCTP' },
+    meta: { requiresAuth: true, title: '功能 · MCTP' },
   },
   {
     path: '/legal/:doc?',
@@ -57,11 +62,6 @@ const routes = [
     path: '/register',
     component: () => import('@/views/RegisterView.vue'),
     meta: { guestOnly: true, title: '创建账号 · MCTP' },
-  },
-  {
-    path: '/dashboard',
-    component: () => import('@/views/DashboardView.vue'),
-    meta: { requiresAuth: true, title: '玩家中心 · MCTP' },
   },
   {
     path: '/points',
@@ -130,7 +130,11 @@ const router = createRouter({
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) return savedPosition
     if (to.hash) {
-      return { el: to.hash, top: 96, behavior: 'smooth' }
+      return {
+        el: to.hash,
+        top: window.innerWidth <= 800 ? 136 : 100,
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+      }
     }
     return { top: 0 }
   },
@@ -142,10 +146,11 @@ router.afterEach((to) => {
 
 router.beforeEach(async (to, from) => {
   const auth = useAuthStore()
-  if (to.meta.requiresAuth && !auth.isLoggedIn) {
+  const requiresAuth = to.meta.requiresAuth
+  if (requiresAuth && !auth.isLoggedIn) {
     return { path: '/login', query: { redirect: to.fullPath } }
   }
-  if (auth.isLoggedIn && (to.meta.requiresAuth || to.meta.guestOnly)) {
+  if (auth.isLoggedIn && (requiresAuth || to.meta.guestOnly)) {
     try {
       await auth.ensureSession()
     } catch {
@@ -155,7 +160,7 @@ router.beforeEach(async (to, from) => {
   }
   if (to.meta.requiresStaff && !auth.isStaff) return '/forbidden'
   if (to.meta.guestOnly && auth.isLoggedIn) {
-    return { path: '/home' }
+    return localRedirect(to.query.redirect)
   }
   if (from.matched.length && to.path !== from.path && !(to.name && to.name === from.name)) {
     await coverScreen()

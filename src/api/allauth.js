@@ -1,9 +1,17 @@
 import { API_BASE_URL } from './axios'
+import { localRedirect } from '@/utils/errors'
 
 // allauth headless "browser" client: session cookie + CSRF cookie. This is
 // intentionally used for local development (same-site localhost). Production
 // cross-site hosting needs a same-site proxy or the app-client/JWT flow.
 const BASE = `${API_BASE_URL}/_allauth/browser/v1`
+const REDIRECT_KEY = 'mctp-auth-redirect'
+
+export function consumeCallbackRedirect(value) {
+  const saved = sessionStorage.getItem(REDIRECT_KEY)
+  sessionStorage.removeItem(REDIRECT_KEY)
+  return localRedirect(value || saved)
+}
 
 function readCookie(name) {
   const prefix = `${name}=`
@@ -60,13 +68,18 @@ async function request(path, { method = 'GET', data } = {}) {
   return payload
 }
 
-export function callbackUrl() {
+export function callbackUrl(redirect) {
   const base = new URL(import.meta.env.BASE_URL, window.location.href).href
-  return `${base}#/auth/microsoft/callback`
+  return `${base}#/auth/microsoft/callback?redirect=${encodeURIComponent(localRedirect(redirect))}`
 }
 
-async function redirectToProvider(provider, process) {
+async function redirectToProvider(provider, process, redirect) {
   await loadConfig()
+  try {
+    sessionStorage.setItem(REDIRECT_KEY, localRedirect(redirect))
+  } catch {
+    throw new Error('无法保存登录返回位置，请允许此站点使用浏览器会话存储后重试')
+  }
   const form = document.createElement('form')
   form.method = 'POST'
   form.action = `${BASE}/auth/provider/redirect`
@@ -74,7 +87,7 @@ async function redirectToProvider(provider, process) {
   const fields = {
     provider,
     process,
-    callback_url: callbackUrl(),
+    callback_url: callbackUrl(redirect),
     csrfmiddlewaretoken: getCsrfToken(),
   }
   for (const [name, value] of Object.entries(fields)) {

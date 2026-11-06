@@ -78,7 +78,7 @@ const PHASE = {
 }
 
 let tl
-function play({ onCovered, onComplete }) {
+function play({ onCovered, onComplete, kind = 'brand' }) {
   measure()
   const { W, H, u } = st
   const cx = W / 2
@@ -107,13 +107,13 @@ function play({ onCovered, onComplete }) {
   // 仅开发环境：暴露时间轴，便于在控制台 seek 到任意时刻逐帧检查
   if (import.meta.env.DEV) window.__pageTransitionTl = tl
 
-  if (reduce) {
+  if (reduce || kind === 'page') {
     // 减少动态效果：只做 0.8s 黑场淡入淡出
     st.mHole = 0
     visibleBg.o = 0
-    tl.to(visibleBg, { o: 1, duration: 0.3 })
+    tl.to(visibleBg, { o: 1, duration: kind === 'page' ? 0.16 : 0.3 })
       .call(onCovered)
-      .to(visibleBg, { o: 0, duration: 0.4, delay: 0.1 })
+      .to(visibleBg, { o: 0, duration: kind === 'page' ? 0.16 : 0.4, delay: kind === 'page' ? 0 : 0.1 })
     return
   }
   visibleBg.o = 1

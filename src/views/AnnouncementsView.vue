@@ -19,7 +19,7 @@ import AnnouncementFeed from '@/components/AnnouncementFeed.vue'
         to="/"
         class="btn-secondary"
       >
-        回到原野 ↗
+        返回首页 ↗
       </RouterLink>
     </div>
     <AnnouncementFeed searchable />
@@ -57,7 +57,7 @@ import AnnouncementFeed from '@/components/AnnouncementFeed.vue'
 
 .announcements-page h1 {
   font-family: var(--font-display);
-  font-size: clamp(40px, 5.4vw, 76px);
+  font-size: clamp(28px, 3.2vw, 40px);
   font-weight: 400;
   line-height: 1.02;
 }
@@ -74,7 +74,7 @@ import AnnouncementFeed from '@/components/AnnouncementFeed.vue'
   }
 
   .announcements-page h1 {
-    font-size: clamp(34px, 9.4vw, 52px);
+    font-size: 28px;
   }
 }
 </style>

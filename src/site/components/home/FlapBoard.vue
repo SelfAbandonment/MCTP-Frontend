@@ -26,13 +26,17 @@ const emit = defineEmits(['update:modelValue'])
 const router = useRouter()
 
 const index = ref(0)
+const hovered = ref(false)
+const focused = ref(false)
+const hidden = ref(false)
+const reduced = ref(false)
 const current = computed(() => props.items[Math.min(index.value, props.items.length - 1)] || null)
 const isExternal = (link) => /^https?:\/\//.test(link)
 
 let timer
 function restart() {
   clearInterval(timer)
-  if (props.preview || props.items.length < 2) return
+  if (props.preview || props.items.length < 2 || hovered.value || focused.value || hidden.value || reduced.value) return
   timer = setInterval(() => go(index.value + 1, true), props.interval)
 }
 
@@ -49,23 +53,9 @@ function go(i, wrap = false) {
 watch(() => props.modelValue, (v) => v != null && v !== index.value && (index.value = v))
 watch(() => props.items.length, (n) => index.value >= n && (index.value = Math.max(0, n - 1)))
 
-// 滚轮：累计到阈值才翻一页，并有冷却时间，触控板惯性不会一下翻过好几页
-let acc = 0
-let cool = 0
-function onWheel(e) {
-  const dir = Math.sign(e.deltaY)
-  const atEdge = (dir > 0 && index.value >= props.items.length - 1) || (dir < 0 && index.value <= 0)
-  if (atEdge || !dir) return // 到头了：不拦截，让页面继续滚动
-  e.preventDefault()
-  const now = performance.now()
-  if (now < cool) return
-  acc += e.deltaY
-  if (Math.abs(acc) >= 40) {
-    go(index.value + dir)
-    acc = 0
-    cool = now + 650
-  }
-}
+function onVisibility() { hidden.value = document.hidden }
+function onMotion(event) { reduced.value = event.matches }
+function onFocusOut(event) { focused.value = boardRef.value?.contains(event.relatedTarget) || false }
 
 function open() {
   const link = current.value?.link
@@ -75,22 +65,31 @@ function open() {
 }
 
 const boardRef = ref(null)
+let motion
 onMounted(() => {
-  // wheel 监听要设成非 passive 才能 preventDefault
-  boardRef.value?.addEventListener('wheel', onWheel, { passive: false })
+  motion = window.matchMedia('(prefers-reduced-motion: reduce)')
+  reduced.value = motion.matches
+  motion.addEventListener('change', onMotion)
+  onVisibility()
+  document.addEventListener('visibilitychange', onVisibility)
   restart()
 })
 onBeforeUnmount(() => {
   clearInterval(timer)
-  boardRef.value?.removeEventListener('wheel', onWheel)
+  motion?.removeEventListener('change', onMotion)
+  document.removeEventListener('visibilitychange', onVisibility)
 })
-watch(() => [props.items.length, props.preview], restart)
+watch(() => [props.items.length, props.preview, hovered.value, focused.value, hidden.value, reduced.value], restart)
 </script>
 
 <template>
   <div
     ref="boardRef"
     class="flap-board"
+    @mouseenter="hovered = true"
+    @mouseleave="hovered = false"
+    @focusin="focused = true"
+    @focusout="onFocusOut"
   >
     <!-- 显示屏 -->
     <div
@@ -101,6 +100,7 @@ watch(() => [props.items.length, props.preview], restart)
       :aria-label="`公告 ${index + 1} / ${items.length}`"
     >
       <FlapImage
+        v-if="current.cover"
         class="cover"
         :src="current.cover"
       />
@@ -169,6 +169,15 @@ watch(() => [props.items.length, props.preview], restart)
         </button>
       </template>
     </div>
+    <div
+      v-if="items.length > 1"
+      class="carousel-controls"
+    >
+      <span
+        role="status"
+        aria-live="off"
+      >第 {{ index + 1 }} 条 / 共 {{ items.length }} 条</span>
+    </div>
   </div>
 </template>
 
@@ -191,7 +200,7 @@ watch(() => [props.items.length, props.preview], restart)
   background: rgba(20, 13, 7, 0.55);
   box-shadow: 0 0 0 2px var(--outline), inset 2px 2px 0 rgba(255, 255, 255, 0.08);
   cursor: pointer;
-  opacity: 0;
+  opacity: 1;
   transition: opacity 0.25s ease-out, transform 0.25s ease-out, background 0.2s, color 0.2s;
 }
 .arrow svg {
@@ -226,13 +235,15 @@ watch(() => [props.items.length, props.preview], restart)
 .screen {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(18px, 3vw, 36px);
   align-items: center;
-  padding: clamp(18px, 3vw, 32px);
+  padding: clamp(20px, 3vw, 32px) 68px;
   background: linear-gradient(180deg, #2e2f33, #232428);
   box-shadow: 0 0 0 3px var(--outline), inset 3px 3px 0 #4a4b50, inset -3px -3px 0 #141417, 0 20px 40px rgba(0, 0, 0, 0.5);
 }
+.screen:has(.cover) { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+.carousel-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; margin-top: 20px; color: #c4c4c9; font-family: var(--font-body); font-size: 14px; }
 .copy {
   display: flex;
   flex-direction: column;
@@ -253,7 +264,7 @@ watch(() => [props.items.length, props.preview], restart)
 .screw.c { bottom: 8px; left: 8px; }
 .screw.d { bottom: 8px; right: 8px; }
 @media (max-width: 760px) {
-  .screen { grid-template-columns: 1fr; }
+  .screen, .screen:has(.cover) { grid-template-columns: 1fr; padding-inline: 56px; }
   .title { --fs: 22px !important; }
 }
 </style>

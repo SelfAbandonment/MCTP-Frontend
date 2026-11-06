@@ -124,23 +124,25 @@ test('root entry uses new site while preserving protected business routes', asyn
   assert.match(router, /site\/pages\/HomePage\.vue/)
   assert.match(router, /createWebHashHistory/)
   assert.match(router, /path: '\/home\/announcements',\s*redirect: '\/manage\/announcements'/)
-  for (const path of ['/dashboard', '/points', '/manage/announcements', '/manage/players', '/manage/points']) {
+  assert.match(router, /path: '\/dashboard',\s*redirect: '\/home'/)
+  for (const path of ['/home', '/points', '/manage/announcements', '/manage/players', '/manage/points']) {
     const start = router.indexOf(`path: '${path}'`)
     assert.notEqual(start, -1)
-    assert.match(router.slice(start, router.indexOf('\n      },', start)), /requiresAuth: true/)
+    assert.match(router.slice(start, router.indexOf('\n  },', start)), /requiresAuth: true/)
   }
 })
 
 test('business routes reuse Create panels and scoped brass controls without cinematic assets', async () => {
-  const [router, authLayout, dashboard, styles] = await Promise.all([
+  const [router, authLayout, panels, home, styles] = await Promise.all([
     readFile(new URL('../src/router/index.js', import.meta.url), 'utf8'),
     readFile(new URL('../src/components/AuthLayout.vue', import.meta.url), 'utf8'),
-    readFile(new URL('../src/views/DashboardView.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/components/dashboard/PlayerAccountPanels.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/site/pages/HomePage.vue', import.meta.url), 'utf8'),
     readFile(new URL('../src/style.css', import.meta.url), 'utf8'),
   ])
   assert.match(router, /component: BusinessPage/)
-  for (const page of [authLayout, dashboard]) {
-    assert.match(page, /<CreatePanel/)
+  assert.match(authLayout, /<CreatePanel/)
+  for (const page of [authLayout, home]) {
     assert.match(page, /<PixelText/)
     assert.doesNotMatch(page, /assets\/media|player-welcome__scene/)
   }
@@ -149,6 +151,122 @@ test('business routes reuse Create panels and scoped brass controls without cine
   assert.match(styles, /--brand:\s*var\(--brass\)/)
   assert.doesNotMatch(styles, /legacy-page|#8ce06a|border-radius:\s*[1-9]/)
   for (const panel of ['CommunityPulse', 'Points', 'Account', 'Minecraft', 'Security', 'Service']) {
-    assert.match(dashboard, new RegExp(`<${panel}Panel\\s*/>`))
+    assert.match(panels, new RegExp(`<${panel}Panel\\s*/>`))
   }
+})
+
+test('ordinary routing selects the short transition without changing first boot branding', async () => {
+  const transition = await server.ssrLoadModule('/src/site/composables/usePageTransition.js')
+  let callbacks
+  const unregister = transition.registerTransition((options) => { callbacks = options })
+  try {
+    const covered = transition.coverScreen()
+    assert.equal(callbacks.kind, 'page')
+    callbacks.onCovered()
+    await covered
+    assert.equal(transition.isTransitionRunning(), true)
+    callbacks.onComplete()
+    await transition.whenTransitionDone()
+    assert.equal(transition.isTransitionRunning(), false)
+    const boot = transition.playTransition()
+    assert.equal(callbacks.kind, 'brand')
+    callbacks.onComplete()
+    await boot
+  } finally {
+    unregister()
+  }
+})
+
+test('navigation has one global entry layer and native limited language controls', async () => {
+  const [nav, business, language, translations] = await Promise.all([
+    readFile(new URL('../src/site/components/SiteNav.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/components/BusinessPage.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/site/components/LanguagePicker.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/site/i18n.js', import.meta.url), 'utf8'),
+  ])
+  assert.doesNotMatch(business, /<nav/)
+  for (const path of ['/home', '/announcements', '/home#features', '/feedback', '/home#account', '/points', '/register']) {
+    assert.ok(nav.includes(path))
+  }
+  assert.match(nav, /<details/)
+  assert.match(nav, /closeMenu\(true\)/)
+  assert.match(language, /<select/)
+  assert.match(language, /v-for="language in LANGS"/)
+  assert.match(translations, /code: 'zh-CN'/)
+  assert.match(translations, /code: 'en'/)
+  assert.equal((translations.match(/code: /g) || []).length, 2)
+  assert.match(language, /仅切换主导航/)
+  assert.match(translations, /document\.documentElement\.lang = 'zh-CN'/)
+})
+
+test('home and unavailable feedback expose semantic headings and no scroll capture', async () => {
+  const [home, board, feedback] = await Promise.all([
+    readFile(new URL('../src/site/pages/HomePage.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/site/components/home/FlapBoard.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/site/pages/FeedbackPage.vue', import.meta.url), 'utf8'),
+  ])
+  assert.match(home, /<h1/)
+  assert.match(home, /id="features"/)
+  assert.doesNotMatch(board, /开启自动轮播|暂停自动轮播|reading-state|阅读时暂停/)
+  assert.match(board, /visibilitychange/)
+  assert.match(board, /focusout/)
+  assert.doesNotMatch(board, /onWheel|preventDefault/)
+  assert.match(feedback, /<CreatePanel\s+v-if="!FEEDBACK_AVAILABLE"/)
+  assert.match(feedback, /<template v-else>/)
+})
+
+test('showcase home, authenticated features and pending footer entries match the requested design', async () => {
+  const [nav, home, footer, router] = await Promise.all([
+    readFile(new URL('../src/site/components/SiteNav.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/site/pages/HomePage.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/site/components/SiteFooter.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/router/index.js', import.meta.url), 'utf8'),
+  ])
+  assert.match(nav, /to: '\/', key: 'nav.index'/)
+  assert.match(nav, /auth.isLoggedIn && auth.user/)
+  assert.match(nav, /background: transparent/)
+  assert.match(home, /id="features"/)
+  assert.match(home, /<PlayerAccountPanels\s*\/>/)
+  assert.doesNotMatch(home, /FlapBoard|loadAnnouncements|ChangelogPanel|RecentComments/)
+  assert.match(footer, /v-for="g in FOOTER_GROUPS"/)
+  assert.match(footer, /class="pending"/)
+  assert.match(router, /requiresAuth: true, title: '功能 · MCTP'/)
+  assert.match(router, /requiresAuth: true, title: '个人中心 · MCTP'/)
+  assert.match(nav, /if \(route.meta.requiresAuth\) await router.replace\('\/'\)/)
+})
+
+test('authentication destinations preserve query and hash through Microsoft callback URLs', async () => {
+  const allauth = await server.ssrLoadModule('/src/api/allauth.js')
+  const previous = globalThis.window
+  const previousStorage = globalThis.sessionStorage
+  globalThis.window = { location: { href: 'http://localhost:5173/preview/pr-1/#/login' } }
+  const sessionValues = new Map()
+  globalThis.sessionStorage = {
+    getItem: key => sessionValues.get(key) ?? null,
+    removeItem: key => sessionValues.delete(key),
+  }
+  try {
+    const callback = allauth.callbackUrl('/home#account')
+    assert.equal(new URLSearchParams(callback.split('?')[1]).get('redirect'), '/home#account')
+    assert.equal(new URLSearchParams(allauth.callbackUrl('//outside.invalid').split('?')[1]).get('redirect'), '/home')
+    sessionValues.set('mctp-auth-redirect', '/points')
+    assert.equal(allauth.consumeCallbackRedirect(), '/points')
+    assert.equal(sessionValues.size, 0)
+    sessionValues.set('mctp-auth-redirect', '/home#account')
+    assert.equal(allauth.consumeCallbackRedirect('/points'), '/points')
+    assert.equal(allauth.consumeCallbackRedirect('//outside.invalid'), '/home')
+  } finally {
+    globalThis.window = previous
+    globalThis.sessionStorage = previousStorage
+  }
+  const [login, register, callback] = await Promise.all([
+    readFile(new URL('../src/views/LoginView.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/views/RegisterView.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/views/MicrosoftCallbackView.vue', import.meta.url), 'utf8'),
+  ])
+  for (const page of [login, register]) {
+    assert.match(page, /router.push\(localRedirect\(route.query.redirect\)\)/)
+    assert.match(page, /query: \{ redirect: localRedirect\(route.query.redirect\) \}/)
+  }
+  assert.match(callback, /router.replace\(destination.value\)/)
 })
