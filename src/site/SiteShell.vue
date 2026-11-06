@@ -6,6 +6,7 @@
  *       透过 M 看到的是加载页，屏幕盖黑时卸载加载页，A 揭开的就是索引页；
  *       转场结束 booted=true → 导航栏掉落回弹 + 索引页入场动画。
  *       之后的页面跳转全部由路由守卫调用同一个转场。
+ * 管理员：左下角有"切换成普通玩家视角"开关（AdminViewSwitch.vue），只影响显示，不改变权限。
  * 页脚：除索引页外（索引页是全屏 3D，自己在最后一段放精简页脚），所有页面最下面自动加 SiteFooter。
  */
 import { onMounted, ref } from 'vue'
@@ -16,6 +17,7 @@ import BootLoader from './components/BootLoader.vue'
 import PageTransition from './components/PageTransition.vue'
 import SiteNav from './components/SiteNav.vue'
 import SiteFooter from './components/SiteFooter.vue'
+import AdminViewSwitch from './components/AdminViewSwitch.vue'
 import { booted } from './siteState'
 import { playTransition } from './composables/usePageTransition'
 import './styles/site.css'
@@ -74,6 +76,7 @@ function onBootDone() {
     </div>
     <SiteFooter v-if="route.name !== 'index'" />
     <SiteNav :show="booted" />
+    <AdminViewSwitch v-if="booted" />
     <BootLoader
       v-if="showLoader"
       @done="onBootDone"
