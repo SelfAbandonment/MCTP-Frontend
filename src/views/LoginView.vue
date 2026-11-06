@@ -17,7 +17,7 @@ async function handleMicrosoft() {
   error.value = ''
   msLoading.value = true
   try {
-    await auth.microsoftLogin()
+    await auth.microsoftLogin(localRedirect(route.query.redirect))
   } catch (e) {
     error.value = errorMessage(e, '无法发起微软登录')
     msLoading.value = false
@@ -43,7 +43,7 @@ async function handleLogin() {
     <p class="eyebrow">
       回到世界
     </p>
-    <h2>欢迎回来。</h2>
+    <h1>欢迎回来。</h1>
     <p class="auth-description">
       登录，回到你的世界。
     </p>
@@ -115,7 +115,7 @@ async function handleLogin() {
     <p class="auth-switch">
       初次来到这里？
       <RouterLink
-        to="/register"
+        :to="{ path: '/register', query: { redirect: localRedirect(route.query.redirect) } }"
         class="link"
       >
         创建账号

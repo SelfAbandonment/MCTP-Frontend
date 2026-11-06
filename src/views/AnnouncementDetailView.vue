@@ -185,7 +185,7 @@ onUnmounted(() => {
 
 .announcement-head h1 {
   font-family: var(--font-display);
-  font-size: clamp(34px, 4.6vw, 62px);
+  font-size: clamp(28px, 3.2vw, 40px);
   font-weight: 400;
   line-height: 1.06;
   overflow-wrap: anywhere;
@@ -223,7 +223,7 @@ onUnmounted(() => {
 
 .announcement-missing h1 {
   font-family: var(--font-display);
-  font-size: clamp(30px, 4vw, 48px);
+  font-size: clamp(28px, 3.2vw, 40px);
   font-weight: 400;
   line-height: 1.1;
   margin-bottom: 14px;

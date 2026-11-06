@@ -43,7 +43,8 @@ import PixelText from '@/site/components/PixelText.vue'
   font-size: 13px;
   color: var(--text-soft);
 }
-:slotted(h2) {
+:slotted(h1) {
+  font-size: 28px;
   margin-bottom: 12px;
 }
 :slotted(.auth-description) {

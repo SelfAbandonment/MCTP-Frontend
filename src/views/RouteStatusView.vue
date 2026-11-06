@@ -51,7 +51,7 @@ async function retry() {
     </p>
     <h1>{{ title }}</h1>
     <p class="text-muted">
-      {{ mode === 'forbidden' ? '需要管理员权限。你仍可以回到玩家中心。' : mode === 'session' ? '登录凭据已保留，请检查连接后重试。' : '回到首页，换个方向继续探索。' }}
+      {{ mode === 'forbidden' ? '需要管理员权限。你仍可以回到个人中心。' : mode === 'session' ? '登录凭据已保留，请检查连接后重试。' : '回到首页，换个方向继续探索。' }}
     </p>
     <p
       v-if="error"
@@ -77,10 +77,10 @@ async function retry() {
       </RouterLink>
       <RouterLink
         v-if="mode === 'forbidden'"
-        to="/dashboard"
+        to="/home"
         class="btn-primary"
       >
-        玩家中心
+        个人中心
       </RouterLink>
     </div>
   </section>
@@ -125,7 +125,7 @@ async function retry() {
 .route-status h1 {
   margin-bottom: 20px;
   font-family: var(--font-display);
-  font-size: clamp(38px, 5.6vw, 78px);
+  font-size: clamp(28px, 3.2vw, 40px);
   font-weight: 400;
   line-height: 1.02;
   letter-spacing: -0.01em;
@@ -149,6 +149,6 @@ async function retry() {
     opacity: 0.85;
   }
 
-  .route-status h1 { font-size: clamp(32px, 9.4vw, 48px); }
+  .route-status h1 { font-size: 28px; }
 }
 </style>

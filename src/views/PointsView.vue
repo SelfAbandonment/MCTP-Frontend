@@ -42,10 +42,10 @@ onMounted(load)
       </p>
     </div>
     <RouterLink
-      to="/dashboard"
+      to="/home"
       class="btn-secondary"
     >
-      返回玩家中心
+      返回个人中心
     </RouterLink>
   </section>
 

@@ -15,7 +15,15 @@
 
 ## 页面流程
 
-打开网站 → 首次加载页 → 导航栏掉落 → 索引页（默认页）→ 通过导航栏跳到主页面 / 反馈（每次跳转都播转场，约 5.5 秒，各段时长见 `PageTransition.vue` 的 `PHASE`）
+打开网站 → 首次加载页 → 完整品牌转场 → 索引页（默认页）。首次品牌转场约 5.5 秒；日常跨页面跳转使用 0.32 秒淡入淡出，不再重复品牌动画。
+
+全站头部透明，首页与品牌链接进入公开官网展示（`/`）；主界面（`/home`）就是登录后的唯一个人中心。原 `/dashboard` 重定向 `/home`，账号、Minecraft 绑定、安全、积分和社区服务面板接入主界面的账号区（`/home#account`），不再并列两个个人中心。功能导航、功能区和介绍页仅登录后可用。仅管理页保留管理子标签。
+
+公告列表和详情独立公开；个人中心只保留公告入口，不展示轮播、更新日志或评论内容。游客访问个人中心或功能时先登录，保留原目标；主动登录默认进入个人中心，注册与微软登录保持同样的回跳规则，Minecraft 绑定返回账号区。主动退出时，私人页面回官网，公开页面留在原页；会话失效进入私人页面则要求重新登录并保留目标。
+
+页脚沿用既有栏目与待填项，不新增或编造联系地址；待填项与已配置链接采用相同行高，避免三列参差错位。
+
+导航语言暂限简体中文与英文，原生选择框位于账号菜单，并明确仅翻译主导航；正文仍为中文，整页 `lang` 保持 `zh-CN`。关闭账号菜单的 Escape 键恢复触发器焦点。
 
 ## 文件对照（按需求条目）
 
@@ -32,15 +40,15 @@
 | 二.1 全屏分段滑动、只触发一次的入场效果、手机端锁定页面 | `src/site/composables/useFullPage.js`（GSAP Observer） |
 | 二.1 驱动模型动画 + 3D 场景镜头切换；自动加载 `public/models/*.glb` | `src/site/three/VoxelStage.js`（教程见 `docs/3d-model-guide.md`） |
 | 二 索引页各段内容 | `src/site/pages/IndexPage.vue` 里的 `SECTIONS` |
-| 三 透明导航栏掉落回弹 | `src/site/components/SiteNav.vue`（`bounce.out`） |
-| 三.2 金色时钟（自绘；放入原版 64 帧贴图则自动改用）+ 24 小时制时间 | `src/site/components/McClock.vue`、贴图放 `src/site/assets/clock/` |
+| 三 透明导航与账号菜单 | `src/site/components/SiteNav.vue`；文字阴影辅助辨识，不添加整条底板 |
+| 三.2 时钟素材（保留组件，当前头部不显示） | `src/site/components/McClock.vue`、贴图放 `src/site/assets/clock/` |
 | 三 Logo 右边的白色像素字 MCREATOPIA | `SiteNav.vue` 中的 `.nav-wordmark` |
-| 三 Language 语言选择器（3D 翻页滚筒） | `src/site/components/LanguagePicker.vue`；语言列表与翻译在 `src/site/i18n.js` |
-| 三.3 当前页金色光 | `SiteNav.vue` 中的 `.router-link-exact-active` |
+| 三 导航语言原生选择框 | `src/site/components/LanguagePicker.vue`；翻译在 `src/site/i18n.js` |
+| 三.3 当前页黄铜底线与 `aria-current` | `SiteNav.vue` 中的 `.is-active` |
 | 一.1 背景水波只推动星星（第四轮：星云静止，不再变亮变暗） | `PixelGalaxy.vue`（`DRIFT` 控制星星荡多远） |
 | 四.1 主页面：悬浮账号面板（头像 / 名字 / UID 复制）+ 右侧今日运势 | `pages/HomePage.vue`、`components/home/AccountHero.vue`、`FortunePanel.vue` |
 | 四.2 今日运势（按 UID + 日期每日轮换）、塔罗抽牌、星盘点评 | `src/site/fortune/fortune.js`、`tarot.js`、`astro.js`；界面 `TarotSpread.vue`、`Astrolabe.vue` |
-| 四.3 公告：翻牌显示器横向选项卡，10 秒轮换 + 滚轮切换 | `components/home/FlapBoard.vue`、`FlapText.vue`、`FlapImage.vue` |
+| 四.3 独立公开公告 | `src/views/AnnouncementsView.vue`、`AnnouncementDetailView.vue`；个人中心只提供入口，翻牌组件保留但不挂载 |
 | 四.3 公告编辑（真实权限、草稿和定时发布） | `/home/announcements` 重定向 `/manage/announcements`，复用 `src/views/ManageAnnouncementsView.vue` |
 | 四 登录与注册 | 复用 `src/views/LoginView.vue`、`RegisterView.vue` 和现有 Microsoft 回调；账号 `services/account.js` 来自真实 auth store |
 | 五 反馈页"书与笔" + 合书动画 + 物品图标 | `pages/FeedbackPage.vue`、`components/feedback/BookQuillIcon.vue`、提交 `services/feedback.js` |
@@ -79,7 +87,7 @@
 - `services/announcements.js` 读取已存在的公开分页公告 API，将 `title`、`summary` 映射到翻牌板；封面接口尚不支持，保持空封面。显示前 10 条公告，点击进入 `/announcements/{id}`。加载失败显示错误和重试，不回退假公告。
 - 管理公告、玩家中心、积分仍使用现有真实接口和服务端权限。业务页面位于 `.business-page` 样式域，统一黄铜／安山机壳配色、方形按钮和输入框；登录与玩家欢迎面板复用 `CreatePanel`、`PixelText`、`PixelAvatar`，不再展示旧影院照片。
 - 今日运势、塔罗和星盘一直是浏览器本地娱乐计算，不是 HTTP 接口；使用真实 UID 作为种子，不需要后端接口。
-- 后端尚无评论与反馈 API：最近评论显示未开放，反馈页保留界面但禁用提交。`submitFeedback()` 明确拒绝，不能写本地存储或显示已提交成功。
+- 后端尚无评论与反馈 API：最近评论以紧凑状态显示未开放；反馈页仅显示未开放说明和已配置的交流渠道，不允许填写或上传。接口启用后再展示书页表单。`submitFeedback()` 明确拒绝，不能写本地存储或显示已提交成功。未配置的页脚链接保留灰色待填占位。
 - 模型、Logo 与部分页脚素材仍待管理团队提供；这和业务数据模拟无关。
 
 ## 历史第四轮笔记

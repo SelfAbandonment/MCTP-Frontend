@@ -24,6 +24,7 @@ export function useFullPage(trackRef, count, onEnter) {
   const visited = new Set()
   let locked = false
   let observer
+  let cooldownTimer
 
   function goTo(next) {
     next = Math.max(0, Math.min(count - 1, next))
@@ -36,13 +37,14 @@ export function useFullPage(trackRef, count, onEnter) {
     onEnter?.(next, prev, first)
     gsap.to(trackRef.value, {
       yPercent: (-100 * next) / count,
-      duration: DURATION,
+      duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : DURATION,
       ease: 'power3.inOut',
-      onComplete: () => setTimeout(() => (locked = false), COOLDOWN),
+      onComplete: () => { cooldownTimer = setTimeout(() => (locked = false), COOLDOWN) },
     })
   }
 
   function onKey(e) {
+    if (e.target.closest('a, button, summary, input, select, textarea, [data-fp-ignore]')) return
     if (['ArrowDown', 'PageDown', ' '].includes(e.key)) {
       e.preventDefault()
       goTo(index.value + 1)
@@ -66,13 +68,14 @@ export function useFullPage(trackRef, count, onEnter) {
       onUp: () => goTo(index.value + 1),
       onDown: () => goTo(index.value - 1),
       // 带 data-fp-ignore 的元素（如可滚动的列表、表单）不触发切段
-      ignore: '[data-fp-ignore]',
+      ignore: '[data-fp-ignore], .site-nav, .dots, a, button, summary, select',
     })
     window.addEventListener('keydown', onKey)
   })
 
   onBeforeUnmount(() => {
     observer?.kill()
+    clearTimeout(cooldownTimer)
     window.removeEventListener('keydown', onKey)
     gsap.killTweensOf(trackRef.value)
   })

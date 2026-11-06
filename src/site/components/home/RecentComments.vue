@@ -8,10 +8,12 @@ import { COMMENTS_UNAVAILABLE } from '../../services/comments'
   <CreatePanel class="recent">
     <div class="inner">
       <header>
-        <PixelText
-          text="最近评论"
-          :px="3"
-        />
+        <h2>
+          <PixelText
+            text="最近评论"
+            :px="3"
+          />
+        </h2>
       </header>
       <p
         class="state"
@@ -34,7 +36,8 @@ import { COMMENTS_UNAVAILABLE } from '../../services/comments'
   flex: 1;
   display: grid;
   place-items: center;
-  min-height: 200px;
+  min-height: 80px;
+  padding-block: 20px;
   text-align: center;
   font-family: var(--font-body);
   color: rgba(255, 255, 255, 0.7);

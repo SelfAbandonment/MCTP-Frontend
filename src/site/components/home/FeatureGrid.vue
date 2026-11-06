@@ -47,9 +47,9 @@ import { FEATURES } from '../../content/features'
         class="tile"
       >
         <span
-          v-if="f.review"
+          v-if="f.key !== 'points'"
           class="tag"
-        >需审核</span>
+        >规划中</span>
         <PixelIcon
           class="icon"
           :icon="f.icon"

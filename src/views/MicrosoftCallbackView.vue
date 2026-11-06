@@ -2,6 +2,8 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { errorMessage, localRedirect } from '@/utils/errors'
+import { consumeCallbackRedirect } from '@/api/allauth'
 
 // allauth error codes -> friendly Chinese messages.
 const ERR_MAP = {
@@ -36,8 +38,16 @@ const auth = useAuthStore()
 
 const status = ref('processing') // processing | success | error
 const message = ref('')
+const destination = ref(localRedirect(route.query.redirect))
 
 onMounted(async () => {
+  try {
+    destination.value = consumeCallbackRedirect(route.query.redirect)
+  } catch {
+    status.value = 'error'
+    message.value = '无法读取登录返回位置，请允许此站点使用浏览器会话存储后重试'
+    return
+  }
   const q = route.query
   // allauth appends ?error=... before the hash fragment, so also read the
   // top-level search params. Clean the address bar before any network request.
@@ -56,15 +66,15 @@ onMounted(async () => {
     await auth.consumeMicrosoftCallback()
     status.value = 'success'
     message.value = '欢迎回来，正在进入你的世界…'
-    await router.replace('/dashboard')
-  } catch {
+    await router.replace(destination.value)
+  } catch (error) {
     status.value = 'error'
-    message.value = '登录态写入失败，请重新登录'
+    message.value = errorMessage(error, '无法完成登录，请重新登录')
   }
 })
 
 function backToLogin() {
-  router.replace('/login')
+  router.replace({ path: '/login', query: { redirect: destination.value } })
 }
 </script>
 

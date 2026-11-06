@@ -3,8 +3,7 @@
  * 文件用途：主页面开头板块——悬浮的机械动力风格账号面板
  * 布局：左 1/3 = 头像 + 白色像素名字 + 小一号的像素数字 UID（旁边有复制按钮）；
  *       右 2/3 = 今日运势（FortunePanel，含塔罗星盘）。
- * 未登录：左侧显示问号头像和"登录"按钮（跳转 /login，登录界面另做）；
- *         右侧运势模糊锁定。不登录也能继续往下浏览公告等内容。
+ * 主界面要求登录；账号设置跳转本页账号区，积分进入独立明细页。
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
@@ -13,9 +12,10 @@ import CreatePanel from './CreatePanel.vue'
 import PixelAvatar from './PixelAvatar.vue'
 import FortunePanel from './FortunePanel.vue'
 import PixelText from '../PixelText.vue'
-import { account, isLoggedIn, isAdmin, logout } from '../../services/account'
+import { account, isLoggedIn, isAdmin } from '../../services/account'
 
 const copied = ref(false)
+const copyError = ref('')
 let copiedTimer
 const auth = useAuthStore()
 const sessionLoading = ref(false)
@@ -41,6 +41,7 @@ onBeforeUnmount(() => clearTimeout(copiedTimer))
  * 原因：navigator.clipboard 只在 https / localhost 下可用，失败时退回到旧的 execCommand 方式。
  */
 async function copyUid() {
+  copyError.value = ''
   const text = String(account.value.uid)
   try {
     await navigator.clipboard.writeText(text)
@@ -51,8 +52,14 @@ async function copyUid() {
     ta.style.opacity = '0'
     document.body.appendChild(ta)
     ta.select()
-    document.execCommand('copy')
-    ta.remove()
+    try {
+      if (!document.execCommand('copy')) throw new Error('Clipboard copy was rejected')
+    } catch {
+      copyError.value = '无法复制 UID，请手动选择下方编号。'
+      return
+    } finally {
+      ta.remove()
+    }
   }
   copied.value = true
   clearTimeout(copiedTimer)
@@ -61,7 +68,11 @@ async function copyUid() {
 </script>
 
 <template>
-  <section class="hero">
+  <section
+    class="hero"
+    :class="{ 'is-guest': !isLoggedIn }"
+    aria-label="账号与今日运势"
+  >
     <CreatePanel
       float
       class="panel"
@@ -143,25 +154,26 @@ async function copyUid() {
                 :class="{ show: copied }"
               >已复制</span>
             </div>
+            <p
+              v-if="copyError"
+              role="alert"
+            >
+              {{ copyError }} {{ account.uid }}
+            </p>
             <span
               v-if="isAdmin"
               class="badge"
             >管理员</span>
-            <router-link
-              to="/dashboard"
-              class="mc-btn is-ghost"
-            >玩家中心</router-link>
-            <router-link
-              to="/points"
-              class="mc-btn is-ghost"
-            >我的积分</router-link>
-            <button
-              type="button"
-              class="logout"
-              @click="logout"
-            >
-              退出登录
-            </button>
+            <div class="account-actions">
+              <router-link
+                to="/home#account"
+                class="mc-btn is-ghost"
+              >账号设置</router-link>
+              <router-link
+                to="/points"
+                class="mc-btn is-ghost"
+              >我的积分</router-link>
+            </div>
           </template>
           <template v-else>
             <PixelAvatar
@@ -175,7 +187,7 @@ async function copyUid() {
               />
             </div>
             <p class="tip">
-              登录后可查看今日运势与更多功能
+              无需登录即可浏览社区公告。
             </p>
             <router-link
               :to="{ path: '/login', query: { redirect: '/home' } }"
@@ -189,7 +201,23 @@ async function copyUid() {
 
         <!-- 右 2/3：今日运势 -->
         <div class="luck">
+          <div
+            v-if="!isLoggedIn"
+            class="guest-intro"
+          >
+            <h2>
+              <PixelText
+                text="欢迎来到社区"
+                :px="2"
+              />
+            </h2>
+            <p>查看最新公告，了解机械动力玩家社区。</p>
+            <p class="tip">
+              登录后可使用社区功能、管理账号、查看积分与今日运势。
+            </p>
+          </div>
           <FortunePanel
+            v-else
             :uid="account?.uid ?? null"
             :locked="!isLoggedIn"
           />
@@ -201,11 +229,11 @@ async function copyUid() {
 
 <style scoped>
 .hero {
-  min-height: calc(100dvh - 160px);
+  width: min(var(--site-width), 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px 0 48px;
+  padding: 8px 0;
 }
 .panel {
   width: min(1120px, 100%);
@@ -213,8 +241,15 @@ async function copyUid() {
 .grid {
   display: grid;
   grid-template-columns: 1fr 2fr;
-  min-height: 420px;
+  min-height: 340px;
 }
+.is-guest .grid { min-height: 0; }
+.is-guest :deep(.pixel-avatar) { width: 72px !important; height: 72px !important; }
+.is-guest .who { padding: 24px 20px; gap: 12px; }
+.guest-intro { display: grid; gap: 12px; align-content: center; height: 100%; font-family: var(--font-body); font-size: 14px; line-height: 1.7; }
+.guest-intro p { margin: 0; }
+.name { max-width: 100%; }
+.name :deep(svg) { max-width: 100%; height: auto; }
 .who {
   display: flex;
   flex-direction: column;
@@ -268,15 +303,8 @@ async function copyUid() {
   background: var(--brass);
   box-shadow: 0 0 0 2px var(--outline);
 }
-.logout {
-  border: 0;
-  background: none;
-  color: rgba(255, 255, 255, 0.4);
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-  text-decoration: underline;
-}
+.account-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; }
+.account-actions .mc-btn { min-height: 44px; }
 .tip {
   margin: 0;
   font-size: 13px;
@@ -291,10 +319,23 @@ async function copyUid() {
     grid-template-columns: 1fr;
   }
   .who {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 12px 20px;
+    text-align: left;
     border-right: 0;
     box-shadow: none;
     border-bottom: 3px solid var(--outline);
-    padding: 28px 16px;
+    padding: 24px 16px;
   }
+  .who :deep(.pixel-avatar) { width: 72px !important; height: 72px !important; grid-column: 1; grid-row: 1 / span 3; }
+  .who .name, .who .uid, .who .badge { grid-column: 2; margin: 0; justify-self: start; }
+  .who .account-actions, .who > p, .who > div[role="alert"] { grid-column: 1 / -1; }
+  .copy { width: 44px; height: 44px; }
+  .is-guest .who { display: grid; grid-template-columns: auto 1fr; gap: 8px 20px; text-align: left; }
+  .is-guest .who :deep(.pixel-avatar) { grid-row: span 3; }
+  .is-guest .who .name { margin: 0; }
+  .is-guest .who .mc-btn { justify-self: start; }
+  .is-guest .luck { padding: 20px; }
 }
 </style>

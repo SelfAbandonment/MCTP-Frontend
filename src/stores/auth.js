@@ -73,12 +73,12 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function microsoftLogin() {
-    await allauthApi.redirectToProvider('microsoft', 'login')
+  async function microsoftLogin(redirect) {
+    await allauthApi.redirectToProvider('microsoft', 'login', redirect)
   }
 
   async function microsoftConnect() {
-    await allauthApi.redirectToProvider('microsoft', 'connect')
+    await allauthApi.redirectToProvider('microsoft', 'connect', '/home#account')
   }
 
   async function consumeMicrosoftCallback() {

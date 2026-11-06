@@ -24,10 +24,12 @@ function toggle(v) {
   <CreatePanel class="changelog">
     <div class="inner">
       <header class="head">
-        <PixelText
-          text="更新日志"
-          :px="3"
-        />
+        <h2>
+          <PixelText
+            text="更新日志"
+            :px="3"
+          />
+        </h2>
       </header>
       <ol class="timeline">
         <li
