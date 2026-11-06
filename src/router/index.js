@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import BusinessPage from '@/components/BusinessPage.vue'
 import { coverScreen } from '@/site/composables/usePageTransition'
+import { coverWith, pickTransition, revealPending } from '@/site/transitions'
 import { localRedirect } from '@/utils/errors'
 
 const DEFAULT_TITLE = 'MCTP · MCREATOPIA'
@@ -142,6 +143,8 @@ const router = createRouter({
 
 router.afterEach((to) => {
   document.title = to.meta.title || DEFAULT_TITLE
+  // 专属转场：新页面渲染出来后再揭开（没有专属转场时什么也不做）
+  revealPending()
 })
 
 router.beforeEach(async (to, from) => {
@@ -163,7 +166,10 @@ router.beforeEach(async (to, from) => {
     return localRedirect(to.query.redirect)
   }
   if (from.matched.length && to.path !== from.path && !(to.name && to.name === from.name)) {
-    await coverScreen()
+    // 登录 / 注册、积分、部分功能页有专属转场（规则见 site/transitions/index.js），其他跳转仍是短转场
+    const kind = pickTransition(to, from)
+    if (kind) await coverWith(kind, { to, from })
+    else await coverScreen()
   }
 })
 

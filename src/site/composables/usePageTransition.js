@@ -7,9 +7,19 @@
  *  - coverScreen()：给路由守卫用（router/index.js 的 beforeEach），等屏幕盖住再放行路由切换。
  *    导航栏点击、浏览器前进/后退、代码里 router.push 都自动走同一个转场。
  *  - whenTransitionDone()：页面里需要"等转场揭开后再播入场动画"时使用。
+ *  - setEffectRunning(promise)：专属转场（site/transitions/）开始时登记，揭开后 promise resolve；
+ *    whenTransitionDone() / isTransitionRunning() 也会把它算进去。
  */
 let player = null
 let running = null
+let effect = null // 正在播放的专属转场（Promise），没有时为 null
+
+export function setEffectRunning(promise) {
+  effect = promise
+  promise.finally(() => {
+    if (effect === promise) effect = null
+  })
+}
 
 export function registerTransition(play) {
   player = play
@@ -44,9 +54,10 @@ export function coverScreen() {
 }
 
 export function whenTransitionDone() {
-  return running || Promise.resolve()
+  if (!running && !effect) return Promise.resolve()
+  return Promise.all([running, effect]).then(() => undefined)
 }
 
 export function isTransitionRunning() {
-  return !!running
+  return !!running || !!effect
 }
