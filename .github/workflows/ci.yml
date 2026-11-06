@@ -247,6 +247,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: build
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v7
 
@@ -256,22 +259,61 @@ jobs:
           name: dist
           path: dist
 
-      # 保留现有 advisory 策略；必需 job 存在不等于断言阻塞合并。
       - name: Run Lighthouse CI
         id: lighthouse
         uses: treosh/lighthouse-ci-action@v12
-        continue-on-error: true
         with:
           configPath: ./lighthouserc.cjs
           uploadArtifacts: true
           temporaryPublicStorage: true
 
-      - name: Report advisory failure
-        if: always() && steps.lighthouse.outcome == 'failure'
+      - name: Comment Lighthouse failure
+        if: failure() && github.event_name == 'pull_request'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          ASSERTIONS: ${{ steps.lighthouse.outputs.assertionResults }}
+          LINKS: ${{ steps.lighthouse.outputs.links }}
         run: |
-          echo "::warning::Lighthouse failed; this check remains advisory"
-          echo "### Lighthouse advisory failed" >> "$GITHUB_STEP_SUMMARY"
-          echo "Review the Lighthouse logs and artifacts; assertions do not currently block merging." >> "$GITHUB_STEP_SUMMARY"
+          set -e
+          failed=$(jq -r '.[] | select(.passed == false) | "- `\(.name)`: \(.actual)（要求 \(.operator) \(.expected)）"' \
+            <<<"${ASSERTIONS:-[]}" 2>/dev/null || true)
+          report=$(jq -r 'if type == "array" then (.[0].url // empty) else (.url // empty) end' \
+            <<<"${LINKS:-[]}" 2>/dev/null || true)
+
+          {
+            echo '<!-- mctp-lighthouse -->'
+            echo '### Lighthouse 门禁未通过'
+            echo
+            echo '以下断言未达标：'
+            echo
+            if [ -n "$failed" ]; then
+              printf '%s\n' "$failed"
+            else
+              echo '```'
+              printf '%s\n' "${ASSERTIONS:-没有拿到 assertionResults}" | head -c 2500
+              echo
+              echo '```'
+            fi
+            if [ -n "$report" ]; then
+              echo
+              echo "[查看 Lighthouse 报告]($report)"
+            fi
+            echo
+            echo '> 该检查已设为必需，修复后重新运行 CI。'
+          } > /tmp/lighthouse-comment.md
+
+          ids=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments?per_page=100" \
+            --jq '.[] | select(.body | contains("<!-- mctp-lighthouse -->")) | .id')
+          id=$(printf '%s\n' "$ids" | sed -n '1p')
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${id}" \
+              -F body=@/tmp/lighthouse-comment.md >/dev/null
+          else
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
+              -F body=@/tmp/lighthouse-comment.md >/dev/null
+          fi
 
   notify:
     if: >-
@@ -373,6 +415,7 @@ jobs:
             --data-urlencode "BRANCH=$BRANCH" \
             --data-urlencode "PR=$PR_NUMBER" \
             --data-urlencode "ACTOR=$ACTOR" \
+            --data-urlencode "COMMIT=${GITHUB_SHA:0:7}" \
             --data-urlencode "URL=$BUILD_URL" \
             --data-urlencode "DETAILS=$DETAILS"
 
