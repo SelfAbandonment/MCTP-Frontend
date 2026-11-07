@@ -2,7 +2,6 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { isAdmin } from '../services/account'
 import PixelText from './PixelText.vue'
 import LanguagePicker from './LanguagePicker.vue'
 import logoUrl from '../assets/logo-placeholder.svg'
@@ -98,7 +97,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onOutside))
           <RouterLink to="/home#account">账号设置</RouterLink>
           <RouterLink to="/points">我的积分</RouterLink>
           <RouterLink
-            v-if="isAdmin"
+            v-if="auth.isStaff"
             to="/manage/announcements"
           >社区管理</RouterLink>
           <button
